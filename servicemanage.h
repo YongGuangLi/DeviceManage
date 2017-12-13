@@ -12,6 +12,7 @@
 #include <QUuid>
 #include <QTreeWidgetItem>
 #include <QMessageBox>
+#include "databasehelper.h"
 
 
 enum serviceNo

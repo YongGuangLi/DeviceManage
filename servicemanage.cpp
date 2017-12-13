@@ -25,37 +25,30 @@ ServiceManage::ServiceManage(QWidget *parent) :
     mapServiceName_[Infrared] = "红外服务程序";
     mapServiceName_[Speaker] = "语音广播服务程序";
 
+    SingletonDBHelper->readAreaDataFromDB();
+    SingletonDBHelper->readDeviceDataFromDB();
     //ui->treeView->setEditTriggers(false);  //设置树节点不可编辑
     connect(ui->treeView,SIGNAL(clicked(QModelIndex)),this,SLOT(treeViewClicked(QModelIndex)));
+    connect(ui->treeView,SIGNAL(customContextMenuRequested(const QPoint &)),this, SLOT(slotCustomContextMenu(const QPoint &)));
+    ui->treeView->setContextMenuPolicy(Qt::CustomContextMenu);
 
     model = new QStandardItemModel(ui->treeView);
     model->setHorizontalHeaderLabels(QStringList()<<QString("名称"));
 
-    itemProject = new QStandardItem(QString("硬件接口服务程序"));
+    itemProject = new QStandardItem(QString("湘潭电厂硬件配置"));
     itemProject->setEditable(false);
     model->appendRow(itemProject);
 
 
-    /*
     for(int i = 0; i < mapServiceName_.size(); ++i)
     {
-        QStandardItem* itemgroup = new QStandardItem(publicIconMap_[i],QString("%1 (%2)").arg(mapServiceName_.[i]).arg(QUuid::createUuid().toString().mid(1,8)));
-        itemFolder->appendRow(itemgroup);
-        for(int j = 0; j < (i+1); ++j)
-        {
-            QStandardItem* itemchannel = new QStandardItem(publicIconMap_[i],QString("123%1").arg(j+1));
-            itemchannel->setCheckable(true);
-            itemchannel->setCheckState(Qt::Checked);
-            itemgroup->appendRow(itemchannel);
-        }
+        QStandardItem* itemgroup = new QStandardItem(QString(mapServiceName_[serviceNo(i)]));
+        itemgroup->setEditable(false);
+        itemProject->appendRow(itemgroup);
     }
-    */
+
 
     ui->treeView->setModel(model);
-
-    ui->treeView->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->treeView,SIGNAL(customContextMenuRequested(const QPoint &)),this, SLOT(slotCustomContextMenu(const QPoint &)));
-
 }
 
 ServiceManage::~ServiceManage()
@@ -65,11 +58,11 @@ ServiceManage::~ServiceManage()
 
 void ServiceManage::slotCustomContextMenu(const QPoint &pos)
 {
-    QStandardItemModel* model = static_cast<QStandardItemModel*>(ui->treeView->model());
+    Q_UNUSED(pos);
     QModelIndex currentIndex = ui->treeView->currentIndex();
     QStandardItem* currentItem = model->itemFromIndex(currentIndex);
 
-    if(currentItem->text().compare("硬件接口服务程序") == 0)
+    if(mapServiceName_.values().contains(currentItem->text()))
     {
         QMenu *menu = new QMenu(ui->treeView);
         QAction *action = new QAction("新增硬件接口程序",ui->treeView);
@@ -78,7 +71,7 @@ void ServiceManage::slotCustomContextMenu(const QPoint &pos)
         menu->move (cursor ().pos ());
         menu->show ();
     }
-    else if(currentItem->text().compare("新建硬件接口服务程序1") == 0)
+    else if(currentItem->parent() != NULL && mapServiceName_.values().contains(currentItem->parent()->text()))
     {
         QMenu *menu = new QMenu(ui->treeView);
         QAction *actionModify = new QAction("修改名称",ui->treeView);
@@ -100,33 +93,24 @@ void ServiceManage::slotCustomContextMenu(const QPoint &pos)
 
 void ServiceManage::treeViewClicked(QModelIndex index)
 {
-//     QStandardItemModel* model = static_cast<QStandardItemModel*>(ui->treeView->model());
-//     QStandardItem* currentItem = model->itemFromIndex(index);
-//     QString text = currentItem->parent()->text().left(currentItem->parent()->text().indexOf(" "));
-//     if(serviceName_.contains(text))
-//     {
-//         qDebug()<<currentItem->text();
-    //     }
+    QStandardItem *currentItem = model->itemFromIndex(index);
+    qDebug()<<currentItem->text();
 }
 
 void ServiceManage::createServiceGroup()
 {
-    QStandardItem* itemFolder = new QStandardItem(QString("新建硬件接口服务程序1"));
+    QModelIndex currentIndex = ui->treeView->currentIndex();
+    QStandardItem *currentItem = model->itemFromIndex(currentIndex);
+
+    QStandardItem* itemFolder = new QStandardItem(publicIconMap_[currentIndex.row()], currentItem->text() + QString(" (%1)").arg(QUuid::createUuid().toString().mid(1,8)));
     itemFolder->setEditable(false);
-    itemProject->appendRow(itemFolder);
-    for(int i = 0; i < mapServiceName_.size(); ++i)
-    {
-        QStandardItem* itemgroup = new QStandardItem(publicIconMap_[i],QString("%1 (%2)").arg(mapServiceName_[serviceNo(i)]).arg(QUuid::createUuid().toString().mid(1,8)));
-        itemgroup->setEditable(false);
-        itemFolder->appendRow(itemgroup);
-    }
+    currentItem->appendRow(itemFolder);
 }
 
 void ServiceManage::modifyServiceGroupName()
 {
     QModelIndex currentIndex = ui->treeView->currentIndex();
     QStandardItem *currentItem = model->itemFromIndex(currentIndex);
-    qDebug()<<currentItem->text();
     currentItem->setEditable(true);
 }
 
@@ -138,24 +122,19 @@ void ServiceManage::serviceConfigFinish()
 
     for(int i = 0; i < rows; ++i)
     {
-        QStandardItem *serviceItem = currentItem->child(i);
-        for(int j = 0; j < serviceItem->rowCount(); ++j)
-        {
-            QStandardItem *deviceItem = serviceItem->child(i);
-            if(deviceItem->checkState() == Qt::Checked)
-            {
-                qDebug()<<deviceItem->text();
-            }
-        }
+        QStandardItem *deviceItem = currentItem->child(i);
+        qDebug()<<deviceItem->text();
     }
 }
 
 void ServiceManage::deleteServiceGroup()
 {
     QModelIndex currentIndex = ui->treeView->currentIndex();
+    QStandardItem *currentItem = model->itemFromIndex(currentIndex);
+
     if(QMessageBox::Ok == QMessageBox::warning(NULL, "警告","确认删除",QMessageBox::Ok | QMessageBox::No))
     {
-         itemProject->removeRow(currentIndex.row());
+         currentItem->parent()->removeRow(currentIndex.row());
     }
 }
 

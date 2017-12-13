@@ -6,6 +6,7 @@
 #include <QSqlError>
 #include <QSqlDriver>
 #include <QDebug>
+#include <QSqlQuery>
 
 #define SingletonDBHelper DataBaseHelper::GetInstance()
 
@@ -16,6 +17,8 @@ public:
     static DataBaseHelper *GetInstance();
     bool open(QString ip,int port, QString dbName, QString user, QString passwd);
 
+    void readDeviceDataFromDB();
+    void readAreaDataFromDB();
     QString getError();
 private:
     explicit DataBaseHelper(QObject *parent = 0);
