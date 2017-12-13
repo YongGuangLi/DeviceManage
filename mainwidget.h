@@ -21,10 +21,10 @@ class MainWidget : public QWidget
 public:
     explicit MainWidget(QWidget *parent = 0);
     ~MainWidget();
-    
+protected:
+    bool eventFilter(QObject *, QEvent *);
 private:
     Ui::MainWidget *ui;
-    DataBaseHelper *DBHelper_;
     ServiceManage *serviceManage_;
 };
 

@@ -1,5 +1,18 @@
 #include "databasehelper.h"
 
+
+DataBaseHelper * DataBaseHelper::dbHelp_ = NULL;
+
+DataBaseHelper *DataBaseHelper::GetInstance()
+{
+    if(dbHelp_ == NULL)
+    {
+      dbHelp_ = new DataBaseHelper();
+    }
+    return dbHelp_;
+}
+
+
 DataBaseHelper::DataBaseHelper(QObject *parent) :
     QObject(parent)
 {
@@ -34,3 +47,5 @@ QString DataBaseHelper::getError()
 {
     return sqlDatabase.lastError().text();
 }
+
+

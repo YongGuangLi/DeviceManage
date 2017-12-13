@@ -23,7 +23,8 @@ HEADERS  += \
     databasehelper.h \
     mainwidget.h \
     configini.h \
-    servicemanage.h
+    servicemanage.h \
+    datatype.h
 
 FORMS    += \
     mainwidget.ui \

@@ -14,6 +14,16 @@
 #include <QMessageBox>
 
 
+enum serviceNo
+{
+    Door,
+    Camera,
+    Location,
+    Warning,
+    Infrared,
+    Speaker
+};
+
 namespace Ui {
 class ServiceManage;
 }
@@ -30,6 +40,8 @@ private slots:
     void slotCustomContextMenu(const QPoint &);
     void treeViewClicked(QModelIndex index);
     void createServiceGroup();
+
+    void modifyServiceGroupName();
     void serviceConfigFinish();
     void deleteServiceGroup();
 private:
@@ -37,7 +49,9 @@ private:
     QStandardItemModel* model;
     QStandardItem* itemProject;
     QMap<int,QIcon> publicIconMap_;
-    QStringList serviceName_;
+    QMap<serviceNo,QString> mapServiceName_;
+    QMap<QString,QString> mapServiceID;
+    QMap<QString,QString> mapServriceGroupID;
 };
 
 #endif // SERVICEMANAGE_H

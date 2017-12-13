@@ -9,12 +9,14 @@ MainWidget::MainWidget(QWidget *parent) :
     this->showMaximized();
     this->setWindowTitle(QString::fromLocal8Bit("硬件配置管理"));
 
-    DBHelper_ = new DataBaseHelper(this);
-    if(!DBHelper_->open(SingletonConfig->getIpMySql(),SingletonConfig->getPortMySql(),SingletonConfig->getDbName(), SingletonConfig->getUserMysql(),SingletonConfig->getPasswdMysql()))
+
+    if(!SingletonDBHelper->open(SingletonConfig->getIpMySql(),SingletonConfig->getPortMySql(),SingletonConfig->getDbName(), SingletonConfig->getUserMysql(),SingletonConfig->getPasswdMysql()))
     {
-        qDebug()<<DBHelper_->getError();
+        qDebug()<<SingletonDBHelper->getError();
     }
 
+    ui->label_ProgressManage->installEventFilter(this);
+    ui->label_ServiceManage->installEventFilter(this);
 
     serviceManage_ = new ServiceManage(ui->stackedWidget->widget(0));
     ui->gridLayout_3->addWidget(serviceManage_);
@@ -24,4 +26,19 @@ MainWidget::MainWidget(QWidget *parent) :
 MainWidget::~MainWidget()
 {
     delete ui;
+}
+
+bool MainWidget::eventFilter(QObject *obj, QEvent *event)
+{
+    if(obj == ui->label_ServiceManage && event->type() == QEvent::MouseButtonPress)
+    {
+        ui->stackedWidget->setCurrentIndex(0);
+        return true;
+    }
+    else if(obj == ui->label_ProgressManage && event->type() == QEvent::MouseButtonPress)
+    {
+        ui->stackedWidget->setCurrentIndex(1);
+        return true;
+    }
+    return QObject::eventFilter(obj, event);
 }
