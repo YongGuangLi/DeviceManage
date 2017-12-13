@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/Camera.png</file>
+        <file>images/Door.png</file>
+        <file>images/Infrared.png</file>
+        <file>images/Location.png</file>
+        <file>images/Speaker.png</file>
+        <file>images/Warning.png</file>
+        <file>qssStyle/whiteStyle.qss</file>
+    </qresource>
+</RCC>
