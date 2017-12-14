@@ -16,7 +16,8 @@ SOURCES += main.cpp\
     databasehelper.cpp \
     mainwidget.cpp \
     configini.cpp \
-    servicemanage.cpp
+    servicemanage.cpp \
+    flowlayout.cpp
 
 HEADERS  += \
     stylehelper.h \
@@ -24,7 +25,8 @@ HEADERS  += \
     mainwidget.h \
     configini.h \
     servicemanage.h \
-    datatype.h
+    datatype.h \
+    flowlayout.h
 
 FORMS    += \
     mainwidget.ui \

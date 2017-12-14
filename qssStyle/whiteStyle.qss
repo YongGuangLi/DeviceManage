@@ -137,12 +137,12 @@ QGroupBox {
         font-size: 15px;
         border: 1px solid rgb(111, 156, 207);
         border-radius: 4px;
-        margin-top: 10px;
+        margin-top: 15px;
 }
 QGroupBox::title {
-        color: rgb(56, 99, 154);
+        color: rgb(0, 0, 0);
         top: -12px;
-        left: 10px;
+        left: 20px;
 }
 
 /**********页签项**********/

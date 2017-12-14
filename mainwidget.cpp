@@ -9,7 +9,6 @@ MainWidget::MainWidget(QWidget *parent) :
     this->showMaximized();
     this->setWindowTitle(QString::fromLocal8Bit("硬件配置管理"));
 
-
     if(!SingletonDBHelper->open(SingletonConfig->getIpMySql(),SingletonConfig->getPortMySql(),SingletonConfig->getDbName(), SingletonConfig->getUserMysql(),SingletonConfig->getPasswdMysql()))
     {
         qDebug()<<SingletonDBHelper->getError();
@@ -17,6 +16,7 @@ MainWidget::MainWidget(QWidget *parent) :
 
     ui->label_ProgressManage->installEventFilter(this);
     ui->label_ServiceManage->installEventFilter(this);
+
 
     serviceManage_ = new ServiceManage(ui->stackedWidget->widget(0));
     ui->gridLayout_3->addWidget(serviceManage_);

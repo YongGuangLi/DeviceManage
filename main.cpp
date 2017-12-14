@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    //StyleHelper::setStyle(":/qssStyle/whiteStyle.qss");
+    StyleHelper::setStyle(":/qssStyle/whiteStyle.qss");
 
     QTextCodec *codec=QTextCodec::codecForName("utf-8");
     QTextCodec::setCodecForLocale(codec);

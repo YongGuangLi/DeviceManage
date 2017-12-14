@@ -6,7 +6,10 @@
 #include <QSqlError>
 #include <QSqlDriver>
 #include <QDebug>
+#include <QMap>
+#include <QList>
 #include <QSqlQuery>
+#include "datatype.h"
 
 #define SingletonDBHelper DataBaseHelper::GetInstance()
 
@@ -17,8 +20,8 @@ public:
     static DataBaseHelper *GetInstance();
     bool open(QString ip,int port, QString dbName, QString user, QString passwd);
 
-    void readDeviceDataFromDB();
-    void readAreaDataFromDB();
+    void readDeviceDataFromDB(QList<stDeviceData> &mapDeviceData);
+    void readAreaDataFromDB(QMap<QString, QString> &mapAreaData);
     QString getError();
 private:
     explicit DataBaseHelper(QObject *parent = 0);
@@ -30,6 +33,7 @@ private:
     QString dbName_;
     QString user_;
     QString passwd_;
+    QMap<QString,ServiceNo> mapDeviceType;   //设备类型对应的服务类型
 signals:
     
 public slots:
