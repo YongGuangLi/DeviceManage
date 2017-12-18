@@ -4,7 +4,7 @@
 #include <QTextCodec>
 #include <QMutex>
 #include <QDateTime>
-
+#include <QDebug>
 QFile g_file;
 void myMessageOutput(QtMsgType type,  const char *msg)
 {

@@ -3,7 +3,17 @@
 
 #define SQL_AREADATA "select area_id,area_name from ws_area"
 #define SQL_DEVICEDATA "select device_id,device_name,area_id,device_type,ip,port,device_username, \
-                        password,service_id,checkable from ws_device"
+password,service_id,checkable from ws_device"
+
+#define SQL_MODIFYSERVICEID "UPDATE ws_device set SERVICE_ID = '%1', CHECKABLE = 1 WHERE DEVICE_ID = '%2'"
+
+#define SQL_ADDSERVICE "insert into ws_service(SERVICE_ID,SERVICE_TYPE) value ('%1',%2)"
+
+#define SQL_SERVICRDATA "select SERVICE_ID,SERVICE_TYPE from ws_service"
+
+#define SQL_DEVICECHECKABLE "update ws_device set CHECKABLE = %1 where DEVICE_ID = '%2'"
+
+#define SQL_DELETESERVICE "delete from ws_service where SERVICE_ID = '%1'"
 
 DataBaseHelper * DataBaseHelper::dbHelp_ = NULL;
 
@@ -22,12 +32,12 @@ DataBaseHelper::DataBaseHelper(QObject *parent) :
 {
     sqlDatabase = QSqlDatabase::addDatabase("QMYSQL");
 
-    mapDeviceType["DOOR"] = TYPE_ACCESSCTRL;
-    mapDeviceType["INFRARED"] = TYPE_INFRARED;
-    mapDeviceType["VIDEO"] = TYPE_CAMERA;
-    mapDeviceType["ALARM"] = TYPE_ALARMLAMP;
-    mapDeviceType["IPSOUND"] = TYPE_IPSOUND;
-    mapDeviceType["LOCAL"] = TYPE_LOCATION;
+    mapDeviceType["DOOR"] = ACCESSCTRL;
+    mapDeviceType["INFRARED"] = INFRARED;
+    mapDeviceType["VIDEO"] = CAMERA;
+    mapDeviceType["ALARM"] = ALARMLAMP;
+    mapDeviceType["IPSOUND"] = IPSOUND;
+    mapDeviceType["LOCAL"] = LOCATION;
 }
 
 bool DataBaseHelper::open(QString ip, int port, QString dbName, QString user, QString passwd)
@@ -54,7 +64,7 @@ bool DataBaseHelper::open(QString ip, int port, QString dbName, QString user, QS
     return isopen;
 }
 
-void DataBaseHelper::readDeviceDataFromDB(QList<stDeviceData>& listDeviceData)
+void DataBaseHelper::readDeviceDataFromDB(QList<stDeviceData*>& listDeviceData)
 {
     // if(isOpen())
     {
@@ -75,19 +85,19 @@ void DataBaseHelper::readDeviceDataFromDB(QList<stDeviceData>& listDeviceData)
             QString device_username =  query.value(6).toString();
             QString password =  query.value(7).toString();
             QString service_id =  query.value(8).toString();
-            QString checkable =  query.value(8).toString();
+            int checkable =  query.value(9).toInt();
 
-            stDeviceData deviceData;
-            deviceData.DeviceID_ = device_id;
-            deviceData.DeviceName_ = device_name;
-            deviceData.AreaID_ = area_id;
-            deviceData.DeviceIp_ = ip;
-            deviceData.DevicePort_ = port;
-            deviceData.DeviceUser_ = device_username;
-            deviceData.DevicePasswd = password;
-            deviceData.ServiceID_ = service_id;
-            deviceData.Checkable_ = checkable;
-            deviceData.serviceNo_ = mapDeviceType.value(device_type);
+            stDeviceData *deviceData = new stDeviceData();
+            deviceData->DeviceID_ = device_id;
+            deviceData->DeviceName_ = device_name;
+            deviceData->AreaID_ = area_id;
+            deviceData->DeviceIp_ = ip;
+            deviceData->DevicePort_ = port;
+            deviceData->DeviceUser_ = device_username;
+            deviceData->DevicePasswd = password;
+            deviceData->ServiceID_ = service_id;
+            deviceData->Checkable_ = checkable;
+            deviceData->serviceNo_ = mapDeviceType.value(device_type);
 
             listDeviceData.push_back(deviceData);
             //qDebug()<<device_id<<device_name<<area_id<<device_type<<ip<<port<<device_username<<password<<service_id<<checkable;
@@ -111,6 +121,89 @@ void DataBaseHelper::readAreaDataFromDB(QMap<QString,QString> &mapAreaData)
             mapAreaData[area_id] = area_name;
         }
     }
+}
+
+bool DataBaseHelper::modifyDeviceServiceID(QString deviceID, QString serviceID)
+{
+    {
+        QSqlQuery query(QString(SQL_MODIFYSERVICEID).arg(serviceID).arg(deviceID));
+
+        if(query.lastError().isValid())
+        {
+            qDebug()<<query.lastError().text();
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+}
+
+bool DataBaseHelper::writeServiceDataToDB(QString serviceID, int serviceType)
+{
+    {
+        QSqlQuery query(QString(SQL_ADDSERVICE).arg(serviceID).arg(serviceType));
+
+        if(query.lastError().isValid())
+        {
+            qDebug()<<query.lastError().text();
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+}
+
+void DataBaseHelper::readServiceDataFromDB(QMap<ServiceNo, QStringList> &mapServiceID)
+{
+
+    QSqlQuery query(QString(SQL_SERVICRDATA));
+    if(query.lastError().isValid())
+    {
+        qDebug()<<query.lastError().text();
+        return;
+    }
+    while(query.next())
+    {
+        QString serviceID = query.value(0).toString();
+        int serviceType = query.value(1).toInt();
+        mapServiceID[ServiceNo(serviceType)].push_back(serviceID);
+    }
+}
+
+bool DataBaseHelper::modifyDeviceCheck(QString deviceID, int checkable)
+{
+    QSqlQuery query(QString(SQL_DEVICECHECKABLE).arg(checkable).arg(deviceID));
+    if(query.lastError().isValid())
+    {
+        qDebug()<<query.lastError().text();
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+bool DataBaseHelper::deleteService(QString serviceID)
+{
+    bool status = false;
+    QSqlQuery query(QString(SQL_DELETESERVICE).arg(serviceID));
+
+    if(query.lastError().isValid())
+    {
+        qDebug()<<query.lastError().text();
+    }
+    else
+    {
+        status = true;
+    }
+
+    return status;
 }
 
 QString DataBaseHelper::getError()

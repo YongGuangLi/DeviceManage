@@ -20,8 +20,16 @@ public:
     static DataBaseHelper *GetInstance();
     bool open(QString ip,int port, QString dbName, QString user, QString passwd);
 
-    void readDeviceDataFromDB(QList<stDeviceData> &mapDeviceData);
+    void readDeviceDataFromDB(QList<stDeviceData *> &mapDeviceData);
     void readAreaDataFromDB(QMap<QString, QString> &mapAreaData);
+    bool modifyDeviceServiceID(QString deviceID, QString serviceID);
+
+    bool modifyDeviceCheck(QString deviceID, int checkable);
+
+    bool writeServiceDataToDB(QString serviceID, int serviceType);
+    void readServiceDataFromDB(QMap<ServiceNo,QStringList> &mapServiceID);
+    bool deleteService(QString serviceID);
+
     QString getError();
 private:
     explicit DataBaseHelper(QObject *parent = 0);

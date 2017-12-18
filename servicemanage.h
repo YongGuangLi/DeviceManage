@@ -15,10 +15,16 @@
 #include <QTreeWidgetItem>
 #include <QGroupBox>
 #include <QMessageBox>
+#include <QTableWidgetItem>
 #include <QMapIterator>
+#include <QTextEdit>
+#include <QTableWidget>
+#include <QButtonGroup>
 #include "datatype.h"
 #include "databasehelper.h"
 #include "flowlayout.h"
+#include "devicedatadisp.h"
+#include "SafeManageMsg.pb.h"
 
 
 
@@ -38,19 +44,32 @@ public:
     void modifyDeviceData();
 
     void clearGroupBoxButton();
+
+    void addDeviceItem(QString serviceId ,QObjectList listObject);   //树中的服务节点添加设备
+
+    QStandardItem* findDeviceItemByID(QStandardItem* , QString);        //通过设备ID,找到树节点
+
+    stDeviceData *findDeviceDataByID(QString);
+
+    void dispDeviceData(QString);                      //展示设备详细信息
 protected:
-    bool eventFilter(QObject *, QEvent *);
+    bool eventFilter(QObject *, QEvent *);      //双击设备QGroup,选择服务
 
 private slots:
-    void slotCustomContextMenu(const QPoint &);
+    void slotCustomContextMenu(const QPoint &); //右击菜单
     void treeViewClicked(QModelIndex index);
-    void createService();
 
-    void modifyServiceGroupName();
-    void serviceConfigFinish();
-    void deleteServiceGroup();
+    void createService();                       //新增服务节点
+    void modifyServiceName();                   //修改服务节点名字
+    void serviceConfigFinish();                 //配置完成，发送设备信息
+    void deleteServiceItem();                   //删除树中的服务节点
+    void areaButtonClicked();                   //单击区域按键
+    void deviceCheckChange(QStandardItem*);     //修改设备节点的复选框
 
-    void areaButtonClicked();
+    void selectServiceID(QTableWidgetItem *);   //为设备选择服务ID
+
+    void deviceButtonClicked();
+
 private:
     Ui::ServiceManage *ui;
     QStandardItemModel* model;
@@ -59,15 +78,23 @@ private:
     QMap<ServiceNo,QIcon> mapServiceIcon_;       //服务类型、服务图标
     QMap<ServiceNo,QString> mapServiceName_;     //服务类型、服务名字
 
-    QMap<QString,QString> mapAreaData;           //区域id、区域描述
 
-    QMap<ServiceNo,QStringList> mapServiceID_;   //一种服务类型下所有服务ID
+    QMap<QString,QString> mapAreaData;             //区域id、区域描述
 
-    QList<stDeviceData> listDeviceData;
+    QMap<ServiceNo,QStringList> mapServiceID_;     //所有服务ID
+    QMap<QString,QStandardItem*> mapServiceItem_;  //保存所有服务的树节点
 
-    QMap<ServiceNo,QList<stDeviceData> > listDeviceData_;
+    QList<stDeviceData*> listDeviceData_;          //所有设备
 
-    QList<QGroupBox*> listQGroupBox;
+
+    QList<QGroupBox*> listQGroupBox_;
+
+    QMap<QString,ServiceNo> mapGroupBoxName_;
+
+    QMap<QString,bool> mapDeviceStatus;           //设备是否选择服务
+    QMap<QString, QPushButton*> mapDeviceButton;  //保存当前所选区域的设备
+
+    QGroupBox *currentSelectDeviceGroup;          //当前选中设备组,用于选择服务ID之后获取设备信息
 };
 
 #endif // SERVICEMANAGE_H

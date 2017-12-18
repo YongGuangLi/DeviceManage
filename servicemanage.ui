@@ -146,7 +146,7 @@
               </size>
              </property>
              <property name="title">
-              <string>摄像头</string>
+              <string>摄像设备</string>
              </property>
             </widget>
            </item>

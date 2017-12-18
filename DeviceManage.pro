@@ -17,7 +17,9 @@ SOURCES += main.cpp\
     mainwidget.cpp \
     configini.cpp \
     servicemanage.cpp \
-    flowlayout.cpp
+    flowlayout.cpp \
+    devicedatadisp.cpp \
+    SafeManageMsg.pb.cc
 
 HEADERS  += \
     stylehelper.h \
@@ -26,13 +28,30 @@ HEADERS  += \
     configini.h \
     servicemanage.h \
     datatype.h \
-    flowlayout.h
+    flowlayout.h \
+    devicedatadisp.h \
+    SafeManageMsg.pb.h
 
 FORMS    += \
     mainwidget.ui \
-    servicemanage.ui
-
-OTHER_FILES +=
+    servicemanage.ui \
+    devicedatadisp.ui
 
 RESOURCES += \
     DeviceManage.qrc
+
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/protobuf/lib/ -llibprotobuf
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/protobuf/lib/ -llibprotobuf
+else:unix: LIBS += -L$$PWD/protobuf/lib/ -llibprotobuf
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/protobuf/lib/ -llibprotobuf-lite
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/protobuf/lib/ -llibprotobuf-lite
+else:unix: LIBS += -L$$PWD/protobuf/lib/ -llibprotobuf
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/protobuf/lib/ -llibprotoc
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/protobuf/lib/ -llibprotoc
+else:unix: LIBS += -L$$PWD/protobuf/lib/ -llibprotobuf
+
+INCLUDEPATH += $$PWD/protobuf
+DEPENDPATH += $$PWD/protobuf
