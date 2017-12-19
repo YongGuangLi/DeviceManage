@@ -20,11 +20,13 @@
 #include <QTextEdit>
 #include <QTableWidget>
 #include <QButtonGroup>
+#include <QVBoxLayout>
 #include "datatype.h"
 #include "databasehelper.h"
 #include "flowlayout.h"
 #include "devicedatadisp.h"
 #include "SafeManageMsg.pb.h"
+#include "redisthread.h"
 
 
 
@@ -45,30 +47,31 @@ public:
 
     void clearGroupBoxButton();
 
-    void addDeviceItem(QString serviceId ,QObjectList listObject);   //树中的服务节点添加设备
+    void addDeviceItem(QString serviceId ,QObjectList listObject);   //服务节点添加设备节点
 
-    QStandardItem* findDeviceItemByID(QStandardItem* , QString);        //通过设备ID,找到树节点
+    QStandardItem* findDeviceItemByID(QString);        //通过设备ID,找到树节点
 
-    stDeviceData *findDeviceDataByID(QString);
+    stDeviceData *findDeviceDataByID(QString);         //通过设备ID,找到设备详细信息
 
     void dispDeviceData(QString);                      //展示设备详细信息
 protected:
-    bool eventFilter(QObject *, QEvent *);      //双击设备QGroup,选择服务
+    bool eventFilter(QObject *, QEvent *);             //双击设备QGroup,选择服务
 
 private slots:
-    void slotCustomContextMenu(const QPoint &); //右击菜单
-    void treeViewClicked(QModelIndex index);
+    void slotCustomContextMenu(const QPoint &);     //右击菜单
+    void treeViewDoubleClicked(QModelIndex index);  //双击树节点
 
     void createService();                       //新增服务节点
     void modifyServiceName();                   //修改服务节点名字
     void serviceConfigFinish();                 //配置完成，发送设备信息
     void deleteServiceItem();                   //删除树中的服务节点
-    void areaButtonClicked();                   //单击区域按键
     void deviceCheckChange(QStandardItem*);     //修改设备节点的复选框
-
     void selectServiceID(QTableWidgetItem *);   //为设备选择服务ID
+    void areaButtonClicked();                   //单击区域按键
+    void deviceButtonClicked();                 //点击设备按键
 
-    void deviceButtonClicked();
+
+    void on_pushButton_clicked();
 
 private:
     Ui::ServiceManage *ui;
@@ -95,6 +98,8 @@ private:
     QMap<QString, QPushButton*> mapDeviceButton;  //保存当前所选区域的设备
 
     QGroupBox *currentSelectDeviceGroup;          //当前选中设备组,用于选择服务ID之后获取设备信息
+
+    QMap<QStandardItem*, stDeviceData*> mapDeviceItem_;   //保存所有设备树节点信息
 };
 
 #endif // SERVICEMANAGE_H

@@ -5,6 +5,7 @@
 #include "databasehelper.h"
 #include "configini.h"
 #include "servicemanage.h"
+#include "redisthread.h"
 #include <QWidget>
 #include <QDebug>
 #include <QStandardItemModel>

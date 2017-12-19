@@ -5,6 +5,11 @@
 #include <QMutex>
 #include <QDateTime>
 #include <QDebug>
+#include "win32fixes.h"
+
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "hiredis.lib")
+
 QFile g_file;
 void myMessageOutput(QtMsgType type,  const char *msg)
 {
@@ -26,6 +31,9 @@ void myMessageOutput(QtMsgType type,  const char *msg)
 
 int main(int argc, char *argv[])
 {
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2,1) , &wsaData);
+
     QApplication a(argc, argv);
 
     StyleHelper::setStyle(":/qssStyle/whiteStyle.qss");

@@ -14,6 +14,7 @@ MainWidget::MainWidget(QWidget *parent) :
         qDebug()<<SingletonDBHelper->getError();
     }
 
+    SingletonRedis->open(SingletonConfig->getIpRedis(), SingletonConfig->getPortRedis());
     ui->label_ProgressManage->installEventFilter(this);
     ui->label_ServiceManage->installEventFilter(this);
 

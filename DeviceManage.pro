@@ -19,7 +19,10 @@ SOURCES += main.cpp\
     servicemanage.cpp \
     flowlayout.cpp \
     devicedatadisp.cpp \
-    SafeManageMsg.pb.cc
+    SafeManageMsg.pb.cc \
+    WgjHiRedis.cpp \
+    redisthread.cpp \
+    redis/win32fixes.c
 
 HEADERS  += \
     stylehelper.h \
@@ -30,7 +33,10 @@ HEADERS  += \
     datatype.h \
     flowlayout.h \
     devicedatadisp.h \
-    SafeManageMsg.pb.h
+    SafeManageMsg.pb.h \
+    WgjHiRedis.h \
+    redisthread.h \
+    redis/win32fixes.h
 
 FORMS    += \
     mainwidget.ui \
@@ -55,3 +61,10 @@ else:unix: LIBS += -L$$PWD/protobuf/lib/ -llibprotobuf
 
 INCLUDEPATH += $$PWD/protobuf
 DEPENDPATH += $$PWD/protobuf
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/redis/lib/ -lhiredis
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/redis/lib/ -lhiredis
+else:unix: LIBS += -L$$PWD/redis/lib/ -lhiredis
+
+INCLUDEPATH += $$PWD/redis
+DEPENDPATH += $$PWD/redis

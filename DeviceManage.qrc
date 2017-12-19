@@ -7,5 +7,6 @@
         <file>images/Speaker.png</file>
         <file>images/Warning.png</file>
         <file>qssStyle/whiteStyle.qss</file>
+        <file>images/search.png</file>
     </qresource>
 </RCC>

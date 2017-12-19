@@ -2,9 +2,10 @@
 #include "ui_servicemanage.h"
 
 
-#define CkeckedStyleSheet   "background-color: rgb(225, 225, 225);"
+#define CkeckedStyleSheet   "background-color: rgb(136, 136, 136);"
 #define UnCkeckStyleSheet   "background-color: rgb(255, 0, 255);"
 #define UnSelectStyleSheet  "background-color: rgb(0, 0, 0);"
+
 ServiceManage::ServiceManage(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::ServiceManage)
@@ -32,6 +33,7 @@ ServiceManage::ServiceManage(QWidget *parent) :
 
     initGroupBox();
 
+
     SingletonDBHelper->readAreaDataFromDB(this->mapAreaData);
     SingletonDBHelper->readDeviceDataFromDB(this->listDeviceData_);
     SingletonDBHelper->readServiceDataFromDB(this->mapServiceID_);
@@ -39,26 +41,25 @@ ServiceManage::ServiceManage(QWidget *parent) :
     QMapIterator<QString,QString> areaDataIt(this->mapAreaData);
 
     QButtonGroup *ButtonGroup = new QButtonGroup();
-    ButtonGroup->setExclusive(true);
-    int i = 0;
+
+    QVBoxLayout *areaLayuut = new QVBoxLayout();
     while(areaDataIt.hasNext())
     {
         areaDataIt.next();
-        QPushButton *areaButton = new QPushButton(areaDataIt.value(), ui->frame_Area);  //显示区域名称
+        QPushButton *areaButton = new QPushButton(areaDataIt.value());  //显示区域名称
         areaButton->setObjectName(areaDataIt.key());  //把区域ID设置成对象名字，便于单机获取区域下的设备
-        areaButton->setMinimumHeight(30);
         areaButton->setCheckable(true);
-        ButtonGroup->addButton(areaButton);
-
         areaButton->show();
-        ui->gridLayout_Area->addWidget(areaButton, i/2, i%2);
+
+        areaLayuut->addWidget(areaButton);
+        ButtonGroup->addButton(areaButton);
         connect(areaButton,SIGNAL(clicked()),this,SLOT(areaButtonClicked()));
-        i++;
     }
+    ui->groupBox_Area->setLayout(areaLayuut);
 
     //ui->treeView->setEditTriggers(false);  //设置树节点不可编辑
 
-    connect(ui->treeView,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(treeViewClicked(QModelIndex)));
+    connect(ui->treeView,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(treeViewDoubleClicked(QModelIndex)));
     connect(ui->treeView,SIGNAL(customContextMenuRequested(const QPoint &)),this, SLOT(slotCustomContextMenu(const QPoint &)));
 
     ui->treeView->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -88,14 +89,20 @@ ServiceManage::ServiceManage(QWidget *parent) :
                 stDeviceData *deviceData = listDeviceData_.at(z);
                 if(deviceData->ServiceID_ == listServiceID.at(j))
                 {
-                    QStandardItem* deviceitem = new QStandardItem(deviceData->DeviceID_);
-                    deviceitem->setCheckable(true);
+                    QString deviceID = deviceData->DeviceID_;
+                    QString deviceName = deviceData->DeviceName_;
+                    QStandardItem* deviceItem = new QStandardItem(deviceName);
+                    deviceItem->setCheckable(true);
                     if(deviceData->Checkable_)
                     {
-                        deviceitem->setCheckState(Qt::Checked);
+                        deviceItem->setCheckState(Qt::Checked);
                     }
-                    deviceitem->setEditable(false);
-                    servicitem->appendRow(deviceitem);
+                    deviceItem->setEditable(false);
+                    servicitem->appendRow(deviceItem);
+
+                    //保存所有设备树节点信息
+                    stDeviceData *deviceData = findDeviceDataByID(deviceID);
+                    mapDeviceItem_[deviceItem] = deviceData;
                 }
             }
         }
@@ -175,16 +182,12 @@ void ServiceManage::slotCustomContextMenu(const QPoint &pos)
     }
 }
 
-void ServiceManage::treeViewClicked(QModelIndex index)
+void ServiceManage::treeViewDoubleClicked(QModelIndex index)
 {
     QStandardItem *currentItem = model->itemFromIndex(index);
-    for(int i = 0; i < listDeviceData_.size(); ++i)
+    if(stDeviceData* deviceData = mapDeviceItem_.value(currentItem, NULL))
     {
-        stDeviceData *deviceData = listDeviceData_.at(i);
-        if(deviceData->DeviceID_ == currentItem->text())
-        {
-            dispDeviceData(deviceData->DeviceID_);
-        }
+        dispDeviceData(deviceData->DeviceID_);
     }
 }
 
@@ -214,18 +217,37 @@ void ServiceManage::serviceConfigFinish()
 {
     QModelIndex currentIndex = ui->treeView->currentIndex();
     QStandardItem *currentItem = model->itemFromIndex(currentIndex);
-    int rows = currentItem->rowCount();
 
+    SafeManageMsg safeManageMsg;
+    safeManageMsg.set_msgtype(TYPE_DEVICECONFIGMSG);
+    DeviceConfigMsg* deviceConfigMsg = safeManageMsg.mutable_deviceconfigmsg();
+    deviceConfigMsg->set_type(DeviceType(currentItem->row()));
+    deviceConfigMsg->set_serviceid(currentItem->text().toStdString());
+
+    int rows = currentItem->rowCount();
     for(int i = 0; i < rows; ++i)
     {
         QStandardItem *deviceItem = currentItem->child(i);
-        if(deviceItem->checkState() == Qt::Checked)
+        if(stDeviceData *deviceData = mapDeviceItem_.value(deviceItem, NULL))
         {
-            SafeManageMsg safeManageMsg;
-
-            qDebug()<<"device id:"<<deviceItem->text();
+            if(deviceItem->checkState() == Qt::Checked)
+            {
+                DeviceInfoMsg* deviceInfoMsg = deviceConfigMsg->add_deviceinfo();
+                deviceInfoMsg->set_areaid(deviceData->AreaID_.toStdString());
+                deviceInfoMsg->set_deviceid(deviceData->DeviceID_.toStdString());
+                deviceInfoMsg->set_ip(deviceData->DeviceIp_.toStdString());
+                deviceInfoMsg->set_port(deviceData->DevicePort_.toInt());
+                deviceInfoMsg->set_user(deviceData->DeviceUser_.toStdString());
+                deviceInfoMsg->set_key(deviceData->DevicePasswd.toStdString());
+            }
         }
     }
+    char dataBuf[2048] = {0};
+    safeManageMsg.SerializeToArray(dataBuf, 2048);
+    vector<string> channel;
+    channel.push_back("DataCenter");
+    qDebug()<<safeManageMsg.ByteSize();
+    SingletonRedis->WriteValue(dataBuf, safeManageMsg.ByteSize(), channel,currentItem->text().toStdString());
 }
 
 void ServiceManage::deleteServiceItem()               //删除树上的服务节点
@@ -237,23 +259,30 @@ void ServiceManage::deleteServiceItem()               //删除树上的服务节
     {
         QString serviceID = currentItem->text();
         SingletonDBHelper->deleteService(serviceID);
-        mapServiceItem_.remove(serviceID);                                             //删除服务节点
+        mapServiceItem_.remove(serviceID);                                 //删除服务节点
 
         ServiceNo serviceNo = ServiceNo(currentItem->parent()->row());
-        mapServiceID_[serviceNo].removeOne(serviceID);   //在保存所有服务的map中删除服务
+        mapServiceID_[serviceNo].removeOne(serviceID);                     //在保存所有服务的map中删除服务
+
         int rowCount = currentItem->rowCount();
         for(int i = 0; i < rowCount; ++i)
         {
-            QString deviceID = currentItem->child(i)->text();
-
-            SingletonDBHelper->modifyDeviceServiceID(deviceID, "");
-            SingletonDBHelper->modifyDeviceCheck(deviceID, 0);
-
-            mapDeviceStatus[deviceID] = false;
-            QPushButton *deviceButton = mapDeviceButton.value(deviceID, NULL);
-            if(deviceButton != NULL)
+            QStandardItem * deviceItem = currentItem->child(i);
+            if(stDeviceData* deviceData = mapDeviceItem_.value(deviceItem, NULL))
             {
-                deviceButton->setStyleSheet(UnSelectStyleSheet);
+                QString deviceID = deviceData->DeviceID_;
+
+                mapDeviceItem_.remove(deviceItem);                              //删除设备节点
+
+                SingletonDBHelper->modifyDeviceServiceID(deviceID, "");
+                SingletonDBHelper->modifyDeviceCheck(deviceID, 0);
+
+                mapDeviceStatus[deviceID] = false;
+                QPushButton *deviceButton = mapDeviceButton.value(deviceID, NULL);
+                if(deviceButton != NULL)
+                {
+                    deviceButton->setStyleSheet(UnSelectStyleSheet);
+                }
             }
         }
         currentItem->parent()->removeRow(currentIndex.row());
@@ -275,7 +304,7 @@ void ServiceManage::areaButtonClicked()
                 connect(deviceButton,SIGNAL(clicked()),this,SLOT(deviceButtonClicked()));
                 if(deviceData->ServiceID_.isEmpty())                   //设备没有分配服务
                 {
-                      deviceButton->setStyleSheet(UnSelectStyleSheet);
+                    deviceButton->setStyleSheet(UnSelectStyleSheet);
                 }
                 else if(deviceData->Checkable_ == 1)                   //设备分配服务,被选中
                 {
@@ -288,7 +317,7 @@ void ServiceManage::areaButtonClicked()
                 }
 
                 deviceButton->setObjectName(deviceData->DeviceID_);        //把设备ID设置成对象名字，便于单击获取设备详细信息
-                deviceButton->setMinimumWidth(150);
+                deviceButton->setMinimumWidth(153);
                 mapDeviceButton[deviceData->DeviceID_] = deviceButton;                 //保存当前显示的设备
 
                 bool status = mapDeviceStatus.value(deviceData->DeviceID_, false);     //如果为true,已被选中
@@ -327,21 +356,27 @@ void ServiceManage::deviceCheckChange(QStandardItem *deviceItem)
 {
     if(deviceItem->checkState() == Qt::Checked)             //选中
     {
-        if(mapDeviceButton.value(deviceItem->text(), NULL))
+        if(stDeviceData* deviceData = mapDeviceItem_.value(deviceItem, NULL))
         {
-            mapDeviceButton[deviceItem->text()]->setStyleSheet(CkeckedStyleSheet);
+            if(mapDeviceButton.value(deviceData->DeviceID_, NULL))
+            {
+                mapDeviceButton[deviceData->DeviceID_]->setStyleSheet(CkeckedStyleSheet);
+            }
+            SingletonDBHelper->modifyDeviceCheck(deviceData->DeviceID_, 1);
+            mapDeviceStatus[deviceData->DeviceID_] = true;
         }
-        SingletonDBHelper->modifyDeviceCheck(deviceItem->text(), 1);
-        mapDeviceStatus[deviceItem->text()] = true;
     }
     else if(deviceItem->checkState() == Qt::Unchecked)      //取消选中
     {
-        if(mapDeviceButton.value(deviceItem->text(), NULL))
+        if(stDeviceData* deviceData = mapDeviceItem_.value(deviceItem, NULL))
         {
-            mapDeviceButton[deviceItem->text()]->setStyleSheet(UnCkeckStyleSheet);
+            if(mapDeviceButton.value(deviceData->DeviceID_, NULL))
+            {
+                mapDeviceButton[deviceData->DeviceID_]->setStyleSheet(UnCkeckStyleSheet);
+            }
+            SingletonDBHelper->modifyDeviceCheck(deviceData->DeviceID_, 0);
+            mapDeviceStatus[deviceData->DeviceID_] = false;
         }
-        SingletonDBHelper->modifyDeviceCheck(deviceItem->text(), 0);
-        mapDeviceStatus[deviceItem->text()] = false;
     }
 }
 
@@ -441,11 +476,11 @@ void ServiceManage::addDeviceItem(QString serviceId, QObjectList listObject)
         if(QPushButton *button = dynamic_cast<QPushButton*>(listObject.at(i)))
         {
             QString deviceID = button->objectName();
-            //QString deviceName = button->text();
-            QStandardItem * item = findDeviceItemByID(itemProject, deviceID); //查看树节点是否已有该设备ID
-            if(item == NULL)                                     //没有
+            QString deviceName = button->text();
+            QStandardItem *deviceItem = findDeviceItemByID(deviceID); //查看树节点是否已有该设备ID
+            if(deviceItem == NULL)                                     //没有
             {
-                QStandardItem* deviceItem = new QStandardItem(deviceID);
+                deviceItem = new QStandardItem(deviceName);
                 deviceItem->setCheckable(true);
                 deviceItem->setCheckState(Qt::Checked);
                 deviceItem->setEditable(false);
@@ -455,35 +490,33 @@ void ServiceManage::addDeviceItem(QString serviceId, QObjectList listObject)
                 findDeviceDataByID(deviceID)->ServiceID_ = serviceId;   //修改设备服务ID
                 findDeviceDataByID(deviceID)->Checkable_ = 1;
                 SingletonDBHelper->modifyDeviceServiceID(deviceID, serviceId);
+
+                //保存所有设备树节点信息
+                stDeviceData *deviceData = findDeviceDataByID(deviceID);
+                mapDeviceItem_[deviceItem] = deviceData;
             }
         }
     }
 
 }
 
-QStandardItem *ServiceManage::findDeviceItemByID(QStandardItem* item,QString deviceID)
+QStandardItem *ServiceManage::findDeviceItemByID(QString deviceID)
 {
-    int rowCount = item->rowCount();
-    for(int i = 0; i < rowCount; ++i)
-    {
-        QStandardItem *servicesItem  = item->child(i);
-        int servicesCount = servicesItem->rowCount();
-        for(int j = 0; j < servicesCount; ++j)
-        {
-            QStandardItem *serviceItem  = servicesItem->child(j);
+    QStandardItem * deviceItem = NULL;
+    QMapIterator<QStandardItem*, stDeviceData*> it(mapDeviceItem_);
 
-            int deviceCount = serviceItem->rowCount();
-            for(int z = 0; z < deviceCount; ++z)
-            {
-                QStandardItem *deviceItem = serviceItem->child(z);
-                if(deviceItem->text() == deviceID)
-                {
-                    return deviceItem;
-                }
-            }
+    while(it.hasNext())
+    {
+        it.next();
+        stDeviceData* deviceData = it.value();
+        if(deviceData->DeviceID_ == deviceID)
+        {
+            deviceItem = it.key();
+            break;
         }
     }
-    return NULL;
+
+    return deviceItem;
 }
 
 stDeviceData* ServiceManage::findDeviceDataByID(QString deviceID)
@@ -497,4 +530,9 @@ stDeviceData* ServiceManage::findDeviceDataByID(QString deviceID)
         }
     }
     return NULL;
+}
+
+void ServiceManage::on_pushButton_clicked()
+{
+    qDebug()<<ui->lineEdit_Serach->text();
 }
