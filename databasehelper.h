@@ -22,7 +22,7 @@ public:
 
     void readDeviceDataFromDB(QList<stDeviceData *> &mapDeviceData);
     void readAreaDataFromDB(QMap<QString, QString> &mapAreaData);
-    bool modifyDeviceServiceID(QString deviceID, QString serviceID);
+    bool modifyDeviceServiceID(QString deviceID, int checkable, QString serviceID);
 
     bool modifyDeviceCheck(QString deviceID, int checkable);
 

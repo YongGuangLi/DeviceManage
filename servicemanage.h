@@ -80,8 +80,7 @@ private:
 
     QMap<ServiceNo,QIcon> mapServiceIcon_;       //服务类型、服务图标
     QMap<ServiceNo,QString> mapServiceName_;     //服务类型、服务名字
-
-
+    QMap<ServiceNo,QString> mapServicePrefix_;   //服务类型、新建服务名字前缀
     QMap<QString,QString> mapAreaData;             //区域id、区域描述
 
     QMap<ServiceNo,QStringList> mapServiceID_;     //所有服务ID
@@ -89,10 +88,8 @@ private:
 
     QList<stDeviceData*> listDeviceData_;          //所有设备
 
-
-    QList<QGroupBox*> listQGroupBox_;
-
-    QMap<QString,ServiceNo> mapGroupBoxName_;
+    QList<QGroupBox*> listQGroupBox_;             //保存GroupBox指针，index对应设备类型枚举
+    QMap<QString,ServiceNo> mapGroupBoxName_;     //保存GroupBox名字对应设备类型
 
     QMap<QString,bool> mapDeviceStatus;           //设备是否选择服务
     QMap<QString, QPushButton*> mapDeviceButton;  //保存当前所选区域的设备

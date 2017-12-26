@@ -5,7 +5,7 @@
 #define SQL_DEVICEDATA "select device_id,device_name,area_id,device_type,ip,port,device_username, \
 password,service_id,checkable from ws_device"
 
-#define SQL_MODIFYSERVICEID "UPDATE ws_device set SERVICE_ID = '%1', CHECKABLE = 1 WHERE DEVICE_ID = '%2'"
+#define SQL_MODIFYSERVICEID "UPDATE ws_device set SERVICE_ID = '%1', CHECKABLE = %2 WHERE DEVICE_ID = '%3'"
 
 #define SQL_ADDSERVICE "insert into ws_service(SERVICE_ID,SERVICE_TYPE) value ('%1',%2)"
 
@@ -30,8 +30,6 @@ DataBaseHelper *DataBaseHelper::GetInstance()
 DataBaseHelper::DataBaseHelper(QObject *parent) :
     QObject(parent)
 {
-    sqlDatabase = QSqlDatabase::addDatabase("QMYSQL");
-
     mapDeviceType["DOOR"] = ACCESSCTRL;
     mapDeviceType["INFRARED"] = INFRARED;
     mapDeviceType["VIDEO"] = CAMERA;
@@ -42,24 +40,29 @@ DataBaseHelper::DataBaseHelper(QObject *parent) :
 
 bool DataBaseHelper::open(QString ip, int port, QString dbName, QString user, QString passwd)
 {
-    sqlDatabase.setHostName(ip);
-    sqlDatabase.setPort(port);
-    sqlDatabase.setDatabaseName(dbName);
-    sqlDatabase.setUserName(user);
-    sqlDatabase.setPassword(passwd);
-    ip_ = ip;
-    port_ = port;
-    dbName_ = dbName;
-    user_ = user;
-    passwd_ = passwd;
-    bool isopen = sqlDatabase.open();
-    if(isopen)
+    bool isopen = false;
+    sqlDatabase = QSqlDatabase::addDatabase("QMYSQL");
+    if(sqlDatabase.isValid())
     {
-        qDebug()<<"Mysql Connect Success:"<<ip;
-    }
-    else
-    {
-        qDebug()<<"Mysql Connect Fail:"<<ip;
+        sqlDatabase.setHostName(ip);
+        sqlDatabase.setPort(port);
+        sqlDatabase.setDatabaseName(dbName);
+        sqlDatabase.setUserName(user);
+        sqlDatabase.setPassword(passwd);
+        ip_ = ip;
+        port_ = port;
+        dbName_ = dbName;
+        user_ = user;
+        passwd_ = passwd;
+        isopen = sqlDatabase.open();
+        if(isopen)
+        {
+            qDebug()<<"Mysql Connect Success:"<<ip;
+        }
+        else
+        {
+            qDebug()<<"Mysql Connect Fail:"<<ip;
+        }
     }
     return isopen;
 }
@@ -123,10 +126,10 @@ void DataBaseHelper::readAreaDataFromDB(QMap<QString,QString> &mapAreaData)
     }
 }
 
-bool DataBaseHelper::modifyDeviceServiceID(QString deviceID, QString serviceID)
+bool DataBaseHelper::modifyDeviceServiceID(QString deviceID,int checkable, QString serviceID)
 {
     {
-        QSqlQuery query(QString(SQL_MODIFYSERVICEID).arg(serviceID).arg(deviceID));
+        QSqlQuery query(QString(SQL_MODIFYSERVICEID).arg(serviceID).arg(checkable).arg(deviceID));
 
         if(query.lastError().isValid())
         {

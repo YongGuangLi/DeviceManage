@@ -10,6 +10,7 @@
 #include <QDebug>
 #include <QStandardItemModel>
 #include <QGridLayout>
+#include <QDateTime>
 
 namespace Ui {
 class MainWidget;
@@ -24,6 +25,9 @@ public:
     ~MainWidget();
 protected:
     bool eventFilter(QObject *, QEvent *);
+
+private slots:
+    void receivieHeartBeat(QString,QString);
 private:
     Ui::MainWidget *ui;
     ServiceManage *serviceManage_;

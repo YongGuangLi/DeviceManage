@@ -6,6 +6,7 @@ MainWidget::MainWidget(QWidget *parent) :
     ui(new Ui::MainWidget)
 {
     ui->setupUi(this);
+
     this->showMaximized();
     this->setWindowTitle(QString::fromLocal8Bit("硬件配置管理"));
 
@@ -14,7 +15,8 @@ MainWidget::MainWidget(QWidget *parent) :
         qDebug()<<SingletonDBHelper->getError();
     }
 
-    SingletonRedis->open(SingletonConfig->getIpRedis(), SingletonConfig->getPortRedis());
+	SingletonRedis->open(SingletonConfig->getIpRedis(), SingletonConfig->getPortRedis());
+    SingletonRedis->start();
     ui->label_ProgressManage->installEventFilter(this);
     ui->label_ServiceManage->installEventFilter(this);
 
@@ -22,6 +24,9 @@ MainWidget::MainWidget(QWidget *parent) :
     serviceManage_ = new ServiceManage(ui->stackedWidget->widget(0));
     ui->gridLayout_3->addWidget(serviceManage_);
     serviceManage_->show();
+
+
+    connect(SingletonRedis,SIGNAL(sendHeatBeat(QString,QString)),this,SLOT(receivieHeartBeat(QString,QString)));
 }
 
 MainWidget::~MainWidget()
@@ -42,4 +47,10 @@ bool MainWidget::eventFilter(QObject *obj, QEvent *event)
         return true;
     }
     return QObject::eventFilter(obj, event);
+}
+
+void MainWidget::receivieHeartBeat(QString serviceID, QString time)
+{
+    qDebug()<<serviceID<<time;
+    ui->textBrowser->append( QDateTime::fromString(time,"yyyyMMddhhmmsszzz").toString("yyyy-MM-dd hh:mm:ss") + " " + serviceID);
 }
