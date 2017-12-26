@@ -26,8 +26,6 @@ public:
 protected:
     bool eventFilter(QObject *, QEvent *);
 
-private slots:
-    void receivieHeartBeat(QString,QString);
 private:
     Ui::MainWidget *ui;
     ServiceManage *serviceManage_;

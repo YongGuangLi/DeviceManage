@@ -26,7 +26,6 @@ MainWidget::MainWidget(QWidget *parent) :
     serviceManage_->show();
 
 
-    connect(SingletonRedis,SIGNAL(sendHeatBeat(QString,QString)),this,SLOT(receivieHeartBeat(QString,QString)));
 }
 
 MainWidget::~MainWidget()
@@ -47,10 +46,4 @@ bool MainWidget::eventFilter(QObject *obj, QEvent *event)
         return true;
     }
     return QObject::eventFilter(obj, event);
-}
-
-void MainWidget::receivieHeartBeat(QString serviceID, QString time)
-{
-    qDebug()<<serviceID<<time;
-    ui->textBrowser->append( QDateTime::fromString(time,"yyyyMMddhhmmsszzz").toString("yyyy-MM-dd hh:mm:ss") + " " + serviceID);
 }
