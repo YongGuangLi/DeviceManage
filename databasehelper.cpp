@@ -9,11 +9,13 @@ password,service_id,checkable from ws_device"
 
 #define SQL_ADDSERVICE "insert into ws_service(SERVICE_ID,SERVICE_TYPE) value ('%1',%2)"
 
-#define SQL_SERVICRDATA "select SERVICE_ID,SERVICE_TYPE from ws_service"
+#define SQL_SERVICRDATA "select SERVICE_ID,SERVICE_TYPE,SERVICE_STATUS from ws_service"
 
 #define SQL_DEVICECHECKABLE "update ws_device set CHECKABLE = %1 where DEVICE_ID = '%2'"
 
 #define SQL_DELETESERVICE "delete from ws_service where SERVICE_ID = '%1'"
+
+#define SQL_MODIFYSERVICE "update ws_service set service_status = %1 where service_id = '%2'"
 
 DataBaseHelper * DataBaseHelper::dbHelp_ = NULL;
 
@@ -161,7 +163,7 @@ bool DataBaseHelper::writeServiceDataToDB(QString serviceID, int serviceType)
     }
 }
 
-void DataBaseHelper::readServiceDataFromDB(QMap<ServiceNo, QStringList> &mapServiceID)
+void DataBaseHelper::readServiceDataFromDB(QMap<ServiceNo, QStringList> &mapServiceID, QMap<QString, int> &mapServiceStatus)
 {
 
     QSqlQuery query(QString(SQL_SERVICRDATA));
@@ -174,7 +176,9 @@ void DataBaseHelper::readServiceDataFromDB(QMap<ServiceNo, QStringList> &mapServ
     {
         QString serviceID = query.value(0).toString();
         int serviceType = query.value(1).toInt();
+        int serviceStatus = query.value(2).toInt();
         mapServiceID[ServiceNo(serviceType)].push_back(serviceID);
+        mapServiceStatus[serviceID] = serviceStatus;
     }
 }
 
@@ -196,6 +200,23 @@ bool DataBaseHelper::deleteService(QString serviceID)
 {
     bool status = false;
     QSqlQuery query(QString(SQL_DELETESERVICE).arg(serviceID));
+
+    if(query.lastError().isValid())
+    {
+        qDebug()<<query.lastError().text();
+    }
+    else
+    {
+        status = true;
+    }
+
+    return status;
+}
+
+bool DataBaseHelper::modifyService(QString serviceID, int serviceStatus)
+{
+    bool status = false;
+    QSqlQuery query(QString(SQL_MODIFYSERVICE).arg(serviceStatus).arg(serviceID));
 
     if(query.lastError().isValid())
     {

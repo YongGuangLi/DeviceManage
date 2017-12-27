@@ -43,7 +43,7 @@ ServiceManage::ServiceManage(QWidget *parent) :
 
     SingletonDBHelper->readAreaDataFromDB(this->mapAreaData);
     SingletonDBHelper->readDeviceDataFromDB(this->listDeviceData_);
-    SingletonDBHelper->readServiceDataFromDB(this->mapServiceID_);
+    SingletonDBHelper->readServiceDataFromDB(this->mapServiceID_,this->mapServiceStatus_);
 
     QMapIterator<QString,QString> areaDataIt(this->mapAreaData);
 
@@ -116,7 +116,7 @@ ServiceManage::ServiceManage(QWidget *parent) :
     }
 
     ui->treeView->setModel(model);
-
+    connect(SingletonRedis, SIGNAL(sendDeviceInitRequest(DeviceInitRequestMsg)), this, SLOT(receiveDeviceInitRequest(DeviceInitRequestMsg)));
 }
 
 ServiceManage::~ServiceManage()
@@ -235,43 +235,7 @@ void ServiceManage::serviceConfigFinish()
 {
     QModelIndex currentIndex = ui->treeView->currentIndex();
     QStandardItem *currentItem = model->itemFromIndex(currentIndex);
-
-    SafeManageMainMsg safeManageMsg;
-    safeManageMsg.set_msgtype(TYPE_DEVICECONFIGMSG);
-    DeviceConfigMsg* deviceConfigMsg = safeManageMsg.mutable_deviceconfigmsg();
-
-    deviceConfigMsg->set_type(DeviceType(currentItem->parent()->row()));
-    deviceConfigMsg->set_serviceid(currentItem->text().toStdString());
-
-    int rows = currentItem->rowCount();
-    for(int i = 0; i < rows; ++i)
-    {
-        QStandardItem *deviceItem = currentItem->child(i);
-        if(stDeviceData *deviceData = mapDeviceItem_.value(deviceItem, NULL))
-        {
-            if(deviceItem->checkState() == Qt::Checked)
-            {
-                qDebug()<<deviceData->DeviceID_.toStdString().c_str();
-                DeviceInfoMsg* deviceInfoMsg = deviceConfigMsg->add_deviceinfo();
-                deviceInfoMsg->set_areaid(deviceData->AreaID_.toStdString());
-                deviceInfoMsg->set_deviceid(deviceData->DeviceID_.toStdString());
-                deviceInfoMsg->set_ip(deviceData->DeviceIp_.toStdString());
-                deviceInfoMsg->set_port(deviceData->DevicePort_.toInt());
-                deviceInfoMsg->set_user(deviceData->DeviceUser_.toStdString());
-                deviceInfoMsg->set_key(deviceData->DevicePasswd.toStdString());
-            }
-        }
-    }
-    char dataBuf[2048] = {0};
-    safeManageMsg.SerializeToArray(dataBuf, 2048);
-    vector<string> channel;
-    channel.push_back("DataCenter");
-
-    if(SingletonRedis->WriteValue(dataBuf, safeManageMsg.ByteSize(), channel, QString("8002_%1").arg(currentItem->text()).toStdString()))
-    {
-        qDebug()<<QString("Send ServiceDeviceData:%1,Size:%2").arg(currentItem->text()).arg(safeManageMsg.ByteSize());
-    }
-
+    sendDeviceConfigMsg(currentItem);
 }
 
 void ServiceManage::deleteServiceItem()               //删除树上的服务节点
@@ -436,6 +400,52 @@ void ServiceManage::dispDeviceData(QString deviceID)
     }
 }
 
+void ServiceManage::sendDeviceConfigMsg(QStandardItem *serviceItem)
+{
+    SafeManageMainMsg safeManageMsg;
+    safeManageMsg.set_msgtype(TYPE_DEVICECONFIGMSG);
+    DeviceConfigMsg* deviceConfigMsg = safeManageMsg.mutable_deviceconfigmsg();
+
+    deviceConfigMsg->set_type(DeviceType(serviceItem->parent()->row()));
+    deviceConfigMsg->set_serviceid(serviceItem->text().toStdString());
+
+    int rows = serviceItem->rowCount();
+    for(int i = 0; i < rows; ++i)
+    {
+        QStandardItem *deviceItem = serviceItem->child(i);
+        if(stDeviceData *deviceData = mapDeviceItem_.value(deviceItem, NULL))
+        {
+            if(deviceItem->checkState() == Qt::Checked)
+            {
+                qDebug()<<"Send DeviceData:"<<deviceData->DeviceID_.toStdString().c_str();
+                DeviceInfoMsg* deviceInfoMsg = deviceConfigMsg->add_deviceinfo();
+                deviceInfoMsg->set_areaid(deviceData->AreaID_.toStdString());
+                deviceInfoMsg->set_deviceid(deviceData->DeviceID_.toStdString());
+                deviceInfoMsg->set_ip(deviceData->DeviceIp_.toStdString());
+                deviceInfoMsg->set_port(deviceData->DevicePort_.toInt());
+                deviceInfoMsg->set_user(deviceData->DeviceUser_.toStdString());
+                deviceInfoMsg->set_key(deviceData->DevicePasswd.toStdString());
+            }
+        }
+    }
+    char dataBuf[2048] = {0};
+    safeManageMsg.SerializeToArray(dataBuf, 2048);
+    vector<string> channel;
+    channel.push_back(DATACENTER);
+
+    if(SingletonRedis->WriteValue(dataBuf, safeManageMsg.ByteSize(), channel, QString("8002_%1").arg(serviceItem->text()).toStdString()))
+    {
+        SingletonDBHelper->modifyService(serviceItem->text(), 1);
+        mapServiceStatus_[serviceItem->text()] = 1;
+        qDebug()<<QString("Send ServiceDeviceData:%1,Size:%2").arg(serviceItem->text()).arg(safeManageMsg.ByteSize());
+    }
+}
+
+void ServiceManage::modifyServiceStatus(QString serviceID, int status)
+{
+    mapServiceStatus_[serviceID] = status;
+}
+
 
 bool ServiceManage::eventFilter(QObject *obj, QEvent *event)
 {
@@ -561,3 +571,32 @@ void ServiceManage::on_pushButton_clicked()
     qDebug()<<ui->lineEdit_Serach->text();
 }
 
+void ServiceManage::receiveDeviceInitRequest(DeviceInitRequestMsg deviceInitRequest)
+{
+    QString serviceID = deviceInitRequest.serviceid().c_str();
+    qDebug()<<"receiveDeviceInitRequest:"<<serviceID<<" Type:"<<deviceInitRequest.type();
+    if(serviceID == DATACENTER)
+    {
+        QStringList listServiceID = mapServiceID_[ServiceNo(deviceInitRequest.type())];
+        for(int i = 0; i < listServiceID.size(); ++i)
+        {
+            int status = mapServiceStatus_.value(listServiceID.at(i), 0);
+            if(status == 1)
+            {
+                QStandardItem* serviceItem = mapServiceItem_.value(listServiceID.at(i), NULL);
+                if(serviceItem != NULL)
+                {
+                    sendDeviceConfigMsg(serviceItem);
+                }
+            }
+        }
+    }
+    else
+    {
+        QStandardItem* serviceItem = mapServiceItem_.value(serviceID, NULL);
+        if(serviceItem != NULL)
+        {
+            sendDeviceConfigMsg(serviceItem);
+        }
+    }
+}

@@ -23,12 +23,22 @@ class MainWidget : public QWidget
 public:
     explicit MainWidget(QWidget *parent = 0);
     ~MainWidget();
+    void sendProcessCmd(QString, ProcessCmdType);
 protected:
     bool eventFilter(QObject *, QEvent *);
+private slots:
+    void receiveProcessInfo(ProcessInfoMsg);
+    void receiveDevicesStatus(DevicesStatusMsg);
+    void receiveProcessAlarm(ProcessAlarmMsg);
 
+    void showCtrlMenu(QPoint pos);
+    void restartProcess();
+    void stopProcess();
+    void deleteProcess();
 private:
     Ui::MainWidget *ui;
     ServiceManage *serviceManage_;
+    QMap<ProcessStatusType,QString> mapServiceStatus_;
 };
 
 #endif // MAINWIDGET_H

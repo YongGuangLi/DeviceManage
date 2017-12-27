@@ -54,6 +54,10 @@ public:
     stDeviceData *findDeviceDataByID(QString);         //通过设备ID,找到设备详细信息
 
     void dispDeviceData(QString);                      //展示设备详细信息
+
+    void sendDeviceConfigMsg(QStandardItem *);
+
+    void modifyServiceStatus(QString,int);             //修改服务状态
 protected:
     bool eventFilter(QObject *, QEvent *);             //双击设备QGroup,选择服务
 
@@ -69,10 +73,9 @@ private slots:
     void selectServiceID(QTableWidgetItem *);   //为设备选择服务ID
     void areaButtonClicked();                   //单击区域按键
     void deviceButtonClicked();                 //点击设备按键
-
-
     void on_pushButton_clicked();
 
+    void receiveDeviceInitRequest(DeviceInitRequestMsg);
 private:
     Ui::ServiceManage *ui;
     QStandardItemModel* model;
@@ -84,6 +87,8 @@ private:
     QMap<QString,QString> mapAreaData;             //区域id、区域描述
 
     QMap<ServiceNo,QStringList> mapServiceID_;     //所有服务ID
+    QMap<QString, int> mapServiceStatus_;          //所有服务状态
+
     QMap<QString,QStandardItem*> mapServiceItem_;  //保存所有服务的树节点
 
     QList<stDeviceData*> listDeviceData_;          //所有设备

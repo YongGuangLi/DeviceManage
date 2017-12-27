@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>604</width>
-    <height>389</height>
+    <width>527</width>
+    <height>465</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,7 +16,10 @@
   <property name="styleSheet">
    <string notr="true"/>
   </property>
-  <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,12">
+  <layout class="QGridLayout" name="gridLayout_4" rowstretch="1,12">
+   <property name="margin">
+    <number>0</number>
+   </property>
    <item row="0" column="0">
     <widget class="QFrame" name="frame">
      <property name="sizePolicy">
@@ -96,15 +99,57 @@
       </layout>
      </widget>
      <widget class="QWidget" name="page_2">
-      <layout class="QGridLayout" name="gridLayout_4">
-       <property name="margin">
-        <number>0</number>
-       </property>
+      <layout class="QGridLayout" name="gridLayout_2">
        <item row="0" column="0">
-        <widget class="QTableWidget" name="tableWidget"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QTextBrowser" name="textBrowser"/>
+        <widget class="QSplitter" name="splitter">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <widget class="QTableWidget" name="tableWidget">
+          <attribute name="horizontalHeaderVisible">
+           <bool>true</bool>
+          </attribute>
+          <attribute name="verticalHeaderVisible">
+           <bool>true</bool>
+          </attribute>
+          <column>
+           <property name="text">
+            <string>服务ID</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>服务名称</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>进程状态</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>启动时间</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>重启次数</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>异常次数</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>心跳时间</string>
+           </property>
+          </column>
+         </widget>
+         <widget class="QTextBrowser" name="textBrowser"/>
+        </widget>
        </item>
       </layout>
      </widget>

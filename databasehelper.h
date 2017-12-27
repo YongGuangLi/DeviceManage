@@ -27,8 +27,10 @@ public:
     bool modifyDeviceCheck(QString deviceID, int checkable);
 
     bool writeServiceDataToDB(QString serviceID, int serviceType);
-    void readServiceDataFromDB(QMap<ServiceNo,QStringList> &mapServiceID);
+    void readServiceDataFromDB(QMap<ServiceNo,QStringList> &mapServiceID,QMap<QString, int>&);
     bool deleteService(QString serviceID);
+
+    bool modifyService(QString serviceID, int serviceStatus);
 
     QString getError();
 private:
