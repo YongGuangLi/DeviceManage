@@ -39,6 +39,7 @@ private:
     Ui::MainWidget *ui;
     ServiceManage *serviceManage_;
     QMap<ProcessStatusType,QString> mapServiceStatus_;
+    QMap<DeviceStatusType,QString> mapDeviceStatusType;
 };
 
 #endif // MAINWIDGET_H

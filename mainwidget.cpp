@@ -43,6 +43,10 @@ MainWidget::MainWidget(QWidget *parent) :
     mapServiceStatus_[TYPE_NORMALRUN] = "正在运行";
     mapServiceStatus_[TYPE_UNKNOWN] = "未知";
 
+    mapDeviceStatusType[TYPE_ONLINE] = "在线";
+    mapDeviceStatusType[TYPE_OFFLINE] = "离线";
+    mapDeviceStatusType[TYPE_OPEN] = "open";
+    mapDeviceStatusType[TYPE_OFF] = "close";
 }
 
 MainWidget::~MainWidget()
@@ -142,9 +146,9 @@ void MainWidget::receiveDevicesStatus(DevicesStatusMsg devicesStatusMsg)
        DeviceStatusMsg deviceStatusMsg = devicesStatusMsg.devicestatus(i);
        QString areaID = deviceStatusMsg.areaid().c_str();
        QString deviceID = deviceStatusMsg.deviceid().c_str();
-       int status = deviceStatusMsg.status();
+       DeviceStatusType status = deviceStatusMsg.status();
        ui->textBrowser->append(QString("服务ID:%1   区域ID:%2   设备ID:%3   设备状态：%4").
-                               arg(serviceID).arg(areaID).arg(deviceID).arg(status));
+                               arg(serviceID).arg(areaID).arg(deviceID).arg(mapDeviceStatusType[status]));
    }
 }
 
