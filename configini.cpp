@@ -28,8 +28,13 @@ ConfigIni::ConfigIni(QObject *parent) : QObject(parent)
 
         settings_->beginGroup("REDIS");
         ipRedis_ = settings_->value("ip").toString();
-        portRedis = settings_->value("port").toInt();
+        portRedis_ = settings_->value("port").toInt();
         settings_->endGroup();
+
+        settings_->beginGroup("PATH");
+        path_ = settings_->value("path").toString();
+        settings_->endGroup();
+
     }
 }
 
@@ -66,5 +71,10 @@ QString ConfigIni::getIpRedis() const
 
 int ConfigIni::getPortRedis() const
 {
-    return portRedis;
+    return portRedis_;
+}
+
+QString ConfigIni::getPath() const
+{
+    return path_;
 }

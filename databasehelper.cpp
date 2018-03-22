@@ -1,7 +1,7 @@
 #include "databasehelper.h"
 
 
-#define SQL_AREADATA "select area_id,area_name from ws_area"
+#define SQL_AREADATA "select area_id,area_name,level from ws_area"
 #define SQL_DEVICEDATA "select device_id,device_name,area_id,device_type,ip,port,device_username, \
 password,service_id,checkable from ws_device"
 
@@ -110,7 +110,7 @@ void DataBaseHelper::readDeviceDataFromDB(QList<stDeviceData*>& listDeviceData)
     }
 }
 
-void DataBaseHelper::readAreaDataFromDB(QMap<QString,QString> &mapAreaData)
+void DataBaseHelper::readAreaDataFromDB(QMap<QString,stAreaData> &mapAreaData)
 {
     {
         QSqlQuery query(QString(SQL_AREADATA));
@@ -121,9 +121,11 @@ void DataBaseHelper::readAreaDataFromDB(QMap<QString,QString> &mapAreaData)
         }
         while(query.next())
         {
-            QString area_id =  query.value(0).toString();
-            QString area_name =  query.value(1).toString();
-            mapAreaData[area_id] = area_name;
+            stAreaData areaData;
+            areaData.AreaID_ =  query.value(0).toString();
+            areaData.AreadName_ =  query.value(1).toString();
+            areaData.level_ =  query.value(2).toInt();
+            mapAreaData[areaData.AreaID_] = areaData;
         }
     }
 }

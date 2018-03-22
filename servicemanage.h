@@ -27,6 +27,7 @@
 #include "devicedatadisp.h"
 #include "SafeManageMsg.pb.h"
 #include "redisthread.h"
+#include "configini.h"
 
 
 
@@ -84,7 +85,7 @@ private:
     QMap<ServiceNo,QIcon> mapServiceIcon_;       //服务类型、服务图标
     QMap<ServiceNo,QString> mapServiceName_;     //服务类型、服务名字
     QMap<ServiceNo,QString> mapServicePrefix_;   //服务类型、新建服务名字前缀
-    QMap<QString,QString> mapAreaData;             //区域id、区域描述
+    QMap<QString,stAreaData> mapAreaData;             //区域id、区域描述
 
     QMap<ServiceNo,QStringList> mapServiceID_;     //所有服务ID
     QMap<QString, int> mapServiceStatus_;          //所有服务状态

@@ -10,21 +10,23 @@ MainWidget::MainWidget(QWidget *parent) :
     this->showMaximized();
     this->setWindowTitle(QString::fromLocal8Bit("硬件配置管理"));
 
+    //连接mysql
     if(!SingletonDBHelper->open(SingletonConfig->getIpMySql(),SingletonConfig->getPortMySql(),SingletonConfig->getDbName(), SingletonConfig->getUserMysql(),SingletonConfig->getPasswdMysql()))
     {
         qDebug()<<SingletonDBHelper->getError();
     }
 
-    SingletonRedis->open(SingletonConfig->getIpRedis(), SingletonConfig->getPortRedis());
-    SingletonRedis->start();
+    //连接redis
+    //SingletonRedis->open(SingletonConfig->getIpRedis(), SingletonConfig->getPortRedis());
+
     ui->label_ProgressManage->installEventFilter(this);
     ui->label_ServiceManage->installEventFilter(this);
-
 
     serviceManage_ = new ServiceManage(ui->stackedWidget->widget(0));
     ui->gridLayout_3->addWidget(serviceManage_);
     serviceManage_->show();
 
+    //进程信息显示表
     ui->tableWidget->verticalHeader()->setHidden(true);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);    //设置内容不可更改
     ui->tableWidget->setColumnWidth(1,200);
@@ -43,14 +45,15 @@ MainWidget::MainWidget(QWidget *parent) :
     mapServiceStatus_[TYPE_NORMALRUN] = "正在运行";
     mapServiceStatus_[TYPE_UNKNOWN] = "未知";
 
-    mapDeviceStatusType[TYPE_ONLINE] = "在线";
-    mapDeviceStatusType[TYPE_OFFLINE] = "离线";
-    mapDeviceStatusType[TYPE_OPEN] = "open";
-    mapDeviceStatusType[TYPE_OFF] = "close";
+    mapDeviceStatus_[TYPE_ONLINE] = "在线";
+    mapDeviceStatus_[TYPE_OFFLINE] = "离线";
+    mapDeviceStatus_[TYPE_OPEN] = "open";
+    mapDeviceStatus_[TYPE_OFF] = "close";
 }
 
 MainWidget::~MainWidget()
 {
+    serviceManage_->deleteLater();
     delete ui;
 }
 
@@ -71,14 +74,15 @@ bool MainWidget::eventFilter(QObject *obj, QEvent *event)
     return QObject::eventFilter(obj, event);
 }
 
+//显示进程信息
 void MainWidget::receiveProcessInfo(ProcessInfoMsg processInfoMsg)
 {
     QString serviceID = processInfoMsg.serviceid().c_str();
     QList<QTableWidgetItem*> listItem = ui->tableWidget->findItems(serviceID,Qt::MatchExactly);
-    int rowCount = 0;
+    //查看该进程是否存在
     if(listItem.size() == 0)
     {
-        rowCount = ui->tableWidget->rowCount();
+        int rowCount = ui->tableWidget->rowCount();
         ui->tableWidget->insertRow(rowCount);
 
         QTableWidgetItem *item0 = new QTableWidgetItem(serviceID);
@@ -113,7 +117,7 @@ void MainWidget::receiveProcessInfo(ProcessInfoMsg processInfoMsg)
     }
     else
     {
-        rowCount = listItem.at(0)->row();
+        int rowCount = listItem.at(0)->row();
         QTableWidgetItem *item1 = ui->tableWidget->item(rowCount,1);
         item1->setText(processInfoMsg.processname().c_str());
 
@@ -132,11 +136,9 @@ void MainWidget::receiveProcessInfo(ProcessInfoMsg processInfoMsg)
         QTableWidgetItem *item6 = ui->tableWidget->item(rowCount,6);
         item6->setText(QDateTime::fromString(processInfoMsg.hearttime().c_str(),"yyyyMMddhhmmsszzz").toString("yyyy-MM-dd hh:mm:ss"));
     }
-
-
-
 }
 
+//显示设备状态
 void MainWidget::receiveDevicesStatus(DevicesStatusMsg devicesStatusMsg)
 {
    QString serviceID = devicesStatusMsg.serviceid().c_str();
@@ -148,10 +150,11 @@ void MainWidget::receiveDevicesStatus(DevicesStatusMsg devicesStatusMsg)
        QString deviceID = deviceStatusMsg.deviceid().c_str();
        DeviceStatusType status = deviceStatusMsg.status();
        ui->textBrowser->append(QString("服务ID:%1   区域ID:%2   设备ID:%3   设备状态：%4").
-                               arg(serviceID).arg(areaID).arg(deviceID).arg(mapDeviceStatusType[status]));
+                               arg(serviceID).arg(areaID).arg(deviceID).arg(mapDeviceStatus_[status]));
    }
 }
 
+//显示进程告警
 void MainWidget::receiveProcessAlarm(ProcessAlarmMsg processAlarmMsg)
 {
     ui->textBrowser->append(QString("时间:%1   服务ID:%2   进程名称:%3   告警内容:%4").
@@ -159,6 +162,7 @@ void MainWidget::receiveProcessAlarm(ProcessAlarmMsg processAlarmMsg)
                             arg(processAlarmMsg.processname().c_str()).arg(processAlarmMsg.alarmdetail().c_str()));
 }
 
+//进程控制菜单
 void MainWidget::showCtrlMenu(QPoint pos)
 {
     QTableWidgetItem *currentItem = ui->tableWidget->itemAt(QPoint(pos.x(),pos.y()));

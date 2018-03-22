@@ -8,5 +8,6 @@
         <file>images/Warning.png</file>
         <file>qssStyle/whiteStyle.qss</file>
         <file>images/search.png</file>
+        <file>images/Counting.png</file>
     </qresource>
 </RCC>

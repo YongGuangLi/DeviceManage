@@ -21,7 +21,7 @@ public:
     bool open(QString ip,int port, QString dbName, QString user, QString passwd);
 
     void readDeviceDataFromDB(QList<stDeviceData *> &mapDeviceData);
-    void readAreaDataFromDB(QMap<QString, QString> &mapAreaData);
+    void readAreaDataFromDB(QMap<QString, stAreaData> &mapAreaData);
     bool modifyDeviceServiceID(QString deviceID, int checkable, QString serviceID);
 
     bool modifyDeviceCheck(QString deviceID, int checkable);

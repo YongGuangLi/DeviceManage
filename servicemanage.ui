@@ -48,7 +48,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>106</width>
+         <width>99</width>
          <height>418</height>
         </rect>
        </property>
@@ -75,7 +75,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>542</width>
+         <width>569</width>
          <height>418</height>
         </rect>
        </property>
@@ -83,63 +83,6 @@
         <property name="margin">
          <number>5</number>
         </property>
-        <item row="9" column="0">
-         <widget class="QGroupBox" name="groupBox_Location">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="title">
-           <string>定位设备</string>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="0">
-         <widget class="QGroupBox" name="groupBox_IpSound">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="title">
-           <string>语音广播</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QGroupBox" name="groupBox_Infrared">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="title">
-           <string>红外设备</string>
-          </property>
-         </widget>
-        </item>
         <item row="0" column="0">
          <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,2,1,2,1,2,10,10,1">
           <item>
@@ -346,11 +289,68 @@
  background: transparent;</string>
             </property>
             <property name="text">
-             <string> </string>
+             <string/>
             </property>
            </widget>
           </item>
          </layout>
+        </item>
+        <item row="9" column="0">
+         <widget class="QGroupBox" name="groupBox_Location">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>定位设备</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QGroupBox" name="groupBox_IpSound">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>语音广播</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QGroupBox" name="groupBox_Infrared">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>红外设备</string>
+          </property>
+         </widget>
         </item>
         <item row="1" column="0">
          <widget class="QGroupBox" name="groupBox_Door">
@@ -406,6 +406,25 @@
           </property>
           <property name="title">
            <string>摄像设备</string>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="0">
+         <widget class="QGroupBox" name="groupBox_Counting">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>人数统计设备</string>
           </property>
          </widget>
         </item>

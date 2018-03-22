@@ -23,6 +23,7 @@ ServiceManage::ServiceManage(QWidget *parent) :
     mapServiceIcon_[ALARMLAMP] =QIcon(":/images/Warning.png");
     mapServiceIcon_[IPSOUND] =QIcon(":/images/Speaker.png");
     mapServiceIcon_[LOCATION] =QIcon(":/images/Location.png");
+    mapServiceIcon_[COUNT] =QIcon(":/images/Counting.png");
 
     mapServiceName_[ACCESSCTRL] = "门禁服务程序";
     mapServiceName_[INFRARED] = "红外服务程序";
@@ -30,6 +31,7 @@ ServiceManage::ServiceManage(QWidget *parent) :
     mapServiceName_[ALARMLAMP] = "声光告警服务程序";
     mapServiceName_[IPSOUND] = "语音广播服务程序";
     mapServiceName_[LOCATION] = "定位服务程序";
+    mapServiceName_[COUNT] = "人数统计服务程序";
 
     mapServicePrefix_[ACCESSCTRL] = "Door";
     mapServicePrefix_[INFRARED] = "Infrared";
@@ -37,6 +39,7 @@ ServiceManage::ServiceManage(QWidget *parent) :
     mapServicePrefix_[ALARMLAMP] = "Warning";
     mapServicePrefix_[IPSOUND] = "Speaker";
     mapServicePrefix_[LOCATION] = "Location";
+    mapServicePrefix_[COUNT] = "Counting";
 
     initGroupBox();
 
@@ -45,15 +48,15 @@ ServiceManage::ServiceManage(QWidget *parent) :
     SingletonDBHelper->readDeviceDataFromDB(this->listDeviceData_);
     SingletonDBHelper->readServiceDataFromDB(this->mapServiceID_,this->mapServiceStatus_);
 
-    QMapIterator<QString,QString> areaDataIt(this->mapAreaData);
+    QMapIterator<QString,stAreaData> areaDataIt(this->mapAreaData);
 
     QButtonGroup *ButtonGroup = new QButtonGroup();
-
     QVBoxLayout *areaLayuut = new QVBoxLayout();
     while(areaDataIt.hasNext())
     {
         areaDataIt.next();
-        QPushButton *areaButton = new QPushButton(areaDataIt.value());  //显示区域名称
+        stAreaData areaData = areaDataIt.value();
+        QPushButton *areaButton = new QPushButton(areaData.AreadName_);  //显示区域名称
         areaButton->setObjectName(areaDataIt.key());  //把区域ID设置成对象名字，便于单机获取区域下的设备
         areaButton->setCheckable(true);
         areaButton->show();
@@ -140,12 +143,14 @@ void ServiceManage::initGroupBox()
     listQGroupBox_.push_back(ui->groupBox_IpSound);
     listQGroupBox_.push_back(ui->groupBox_Location);
 
+    //绑定GroupBox对应设备类型，双击GroupBox过滤对应设备服务
     mapGroupBoxName_["门禁设备"] = ACCESSCTRL;
     mapGroupBoxName_["红外设备"] = INFRARED;
     mapGroupBoxName_["摄像设备"] = CAMERA;
     mapGroupBoxName_["声光告警"] = ALARMLAMP;
     mapGroupBoxName_["语音广播"] = IPSOUND;
     mapGroupBoxName_["定位设备"] = LOCATION;
+    mapGroupBoxName_["人数统计设备"] = COUNT;
 
     ui->groupBox_Door->installEventFilter(this);
     ui->groupBox_Infrared->installEventFilter(this);
@@ -173,8 +178,8 @@ void ServiceManage::slotCustomContextMenu(const QPoint &pos)
     else if(currentItem->parent() != NULL && mapServiceName_.values().contains(currentItem->parent()->text()))
     {
         QMenu *menu = new QMenu(ui->treeView);
-        QAction *actionModify = new QAction("修改名称",ui->treeView);
-        connect(actionModify,SIGNAL(triggered()),this,SLOT(modifyServiceName()));
+//        QAction *actionModify = new QAction("修改名称",ui->treeView);
+//        connect(actionModify,SIGNAL(triggered()),this,SLOT(modifyServiceName()));
 
         QAction *actionFinish = new QAction("配置完毕",ui->treeView);
         connect(actionFinish,SIGNAL(triggered()),this,SLOT(serviceConfigFinish()));
@@ -182,7 +187,7 @@ void ServiceManage::slotCustomContextMenu(const QPoint &pos)
         QAction *actionDelete = new QAction("删除",ui->treeView);
         connect(actionDelete,SIGNAL(triggered()),this,SLOT(deleteServiceItem()));
 
-        menu->addAction(actionModify);
+//        menu->addAction(actionModify);
         menu->addAction(actionFinish);
         menu->addAction(actionDelete);
         menu->move(cursor().pos());
@@ -199,6 +204,7 @@ void ServiceManage::treeViewDoubleClicked(QModelIndex index)
     }
 }
 
+//新建服务
 void ServiceManage::createService()
 {
     QModelIndex currentIndex = ui->treeView->currentIndex();
@@ -296,7 +302,6 @@ void ServiceManage::areaButtonClicked()
                 }
                 else if(deviceData->Checkable_ == 1)                   //设备分配服务,被选中
                 {
-
                     deviceButton->setStyleSheet(CkeckedStyleSheet);
                 }
                 else                                                   //设备分配服务，但是没被选中
@@ -395,7 +400,7 @@ void ServiceManage::dispDeviceData(QString deviceID)
         static DeviceDataDisp *deviceDataDisp = new DeviceDataDisp();
         deviceDataDisp->setWindowIcon(mapServiceIcon_[deviceData->serviceNo_]);
         deviceDataDisp->setWindowTitle("设备详细信息");
-        deviceDataDisp->setDeviceData(deviceData->DeviceID_,deviceData->DeviceName_,mapAreaData[deviceData->AreaID_], deviceData->AreaID_,deviceData->DeviceIp_,deviceData->DevicePort_,deviceData->DeviceUser_,deviceData->DevicePasswd,deviceData->ServiceID_);
+        deviceDataDisp->setDeviceData(deviceData->DeviceID_,deviceData->DeviceName_,mapAreaData[deviceData->AreaID_].AreadName_, deviceData->AreaID_,deviceData->DeviceIp_,deviceData->DevicePort_,deviceData->DeviceUser_,deviceData->DevicePasswd,deviceData->ServiceID_);
         deviceDataDisp->show();
     }
 }
@@ -406,7 +411,8 @@ void ServiceManage::sendDeviceConfigMsg(QStandardItem *serviceItem)
     safeManageMsg.set_msgtype(TYPE_DEVICECONFIGMSG);
     DeviceConfigMsg* deviceConfigMsg = safeManageMsg.mutable_deviceconfigmsg();
 
-    deviceConfigMsg->set_type(DeviceType(serviceItem->parent()->row()));
+    DeviceType deviceType = DeviceType(serviceItem->parent()->row());
+    deviceConfigMsg->set_type(deviceType);
     deviceConfigMsg->set_serviceid(serviceItem->text().toStdString());
 
     int rows = serviceItem->rowCount();
@@ -425,6 +431,10 @@ void ServiceManage::sendDeviceConfigMsg(QStandardItem *serviceItem)
                 deviceInfoMsg->set_port(deviceData->DevicePort_.toInt());
                 deviceInfoMsg->set_user(deviceData->DeviceUser_.toStdString());
                 deviceInfoMsg->set_key(deviceData->DevicePasswd.toStdString());
+                if(deviceType == TYPE_CAMERA)         //如果设备是摄像头，还要设置抓拍照片存储路径
+                {
+                    deviceInfoMsg->set_path(SingletonConfig->getPath().toLocal8Bit().data());
+                }
             }
         }
     }
