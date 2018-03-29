@@ -33,6 +33,14 @@ ServiceManage::ServiceManage(QWidget *parent) :
     mapServiceName_[LOCATION] = "定位服务程序";
     mapServiceName_[COUNT] = "人数统计服务程序";
 
+    mapServiceType_["门禁服务程序"] = TYPE_ACCESSCTRL;
+    mapServiceType_["红外服务程序"] = TYPE_INFRARED;
+    mapServiceType_["视频服务程序"] = TYPE_CAMERA;
+    mapServiceType_["声光告警服务程序"] = TYPE_ALARMLAMP;
+    mapServiceType_["语音广播服务程序"] = TYPE_IPSOUND;
+    mapServiceType_["定位服务程序"] = TYPE_LOCATION;
+    mapServiceType_["人数统计服务程序"] = TYPE_CAMERA_COUNT;
+
     mapServicePrefix_[ACCESSCTRL] = "Door";
     mapServicePrefix_[INFRARED] = "Infrared";
     mapServicePrefix_[CAMERA] = "Camera";
@@ -41,46 +49,84 @@ ServiceManage::ServiceManage(QWidget *parent) :
     mapServicePrefix_[LOCATION] = "Location";
     mapServicePrefix_[COUNT] = "Counting";
 
-    initGroupBox();
-
 
     SingletonDBHelper->readAreaDataFromDB(this->mapAreaData);
     SingletonDBHelper->readDeviceDataFromDB(this->listDeviceData_);
     SingletonDBHelper->readServiceDataFromDB(this->mapServiceID_,this->mapServiceStatus_);
 
-    QMapIterator<QString,stAreaData> areaDataIt(this->mapAreaData);
+    initGroupBox();
 
-    QButtonGroup *ButtonGroup = new QButtonGroup();
-    QVBoxLayout *areaLayuut = new QVBoxLayout();
-    while(areaDataIt.hasNext())
-    {
-        areaDataIt.next();
-        stAreaData areaData = areaDataIt.value();
-        QPushButton *areaButton = new QPushButton(areaData.AreadName_);  //显示区域名称
-        areaButton->setObjectName(areaDataIt.key());  //把区域ID设置成对象名字，便于单机获取区域下的设备
-        areaButton->setCheckable(true);
-        areaButton->show();
+    initServiceData();
 
-        areaLayuut->addWidget(areaButton);
-        ButtonGroup->addButton(areaButton);
-        connect(areaButton,SIGNAL(clicked()),this,SLOT(areaButtonClicked()));
-    }
-    ui->groupBox_Area->setLayout(areaLayuut);
+    initAreaData();
 
+    connect(SingletonRedis, SIGNAL(sendDeviceInitRequest(DeviceInitRequestMsg)), this, SLOT(receiveDeviceInitRequest(DeviceInitRequestMsg)));
+}
+
+ServiceManage::~ServiceManage()
+{
+    delete ui;
+}
+
+void ServiceManage::initGroupBox()
+{
+    FlowLayout *flowLayout_Door = new FlowLayout(ui->groupBox_Door);
+    FlowLayout *flowLayout_Infrared = new FlowLayout(ui->groupBox_Infrared);
+    FlowLayout *flowLayout_Camera = new FlowLayout(ui->groupBox_Camera);
+    FlowLayout *flowLayout_AlarmLamp = new FlowLayout(ui->groupBox_AlarmLamp);
+    FlowLayout *flowLayout_IpSound = new FlowLayout(ui->groupBox_IpSound);
+    FlowLayout *flowLayout_Location = new FlowLayout(ui->groupBox_Location);
+    FlowLayout *flowLayout_Counting = new FlowLayout(ui->groupBox_Counting);
+
+    Q_UNUSED(flowLayout_Door);
+    Q_UNUSED(flowLayout_Infrared);
+    Q_UNUSED(flowLayout_Camera);
+    Q_UNUSED(flowLayout_AlarmLamp);
+    Q_UNUSED(flowLayout_IpSound);
+    Q_UNUSED(flowLayout_Location);
+    Q_UNUSED(flowLayout_Counting);
+
+    listGroupBox_.push_back(ui->groupBox_Door);
+    listGroupBox_.push_back(ui->groupBox_Infrared);
+    listGroupBox_.push_back(ui->groupBox_Camera);
+    listGroupBox_.push_back(ui->groupBox_AlarmLamp);
+    listGroupBox_.push_back(ui->groupBox_IpSound);
+    listGroupBox_.push_back(ui->groupBox_Location);
+    listGroupBox_.push_back(ui->groupBox_Counting);
+
+    //绑定GroupBox对应设备类型，双击GroupBox过滤对应设备服务
+    mapGroupBoxTitle_["门禁设备"] = ACCESSCTRL;
+    mapGroupBoxTitle_["红外设备"] = INFRARED;
+    mapGroupBoxTitle_["摄像设备"] = CAMERA;
+    mapGroupBoxTitle_["声光告警"] = ALARMLAMP;
+    mapGroupBoxTitle_["语音广播"] = IPSOUND;
+    mapGroupBoxTitle_["定位设备"] = LOCATION;
+    mapGroupBoxTitle_["人数统计设备"] = COUNT;
+
+    ui->groupBox_Door->installEventFilter(this);
+    ui->groupBox_Infrared->installEventFilter(this);
+    ui->groupBox_Camera->installEventFilter(this);
+    ui->groupBox_AlarmLamp->installEventFilter(this);
+    ui->groupBox_IpSound->installEventFilter(this);
+    ui->groupBox_Location->installEventFilter(this);
+    ui->groupBox_Counting->installEventFilter(this);
+}
+
+void ServiceManage::initServiceData()
+{
+    //显示服务treeView
     //ui->treeView->setEditTriggers(false);  //设置树节点不可编辑
-
-    connect(ui->treeView,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(treeViewDoubleClicked(QModelIndex)));
+    connect(ui->treeView,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(serviceItemDoubleClicked(QModelIndex)));
+    //添加右击菜单
+    ui->treeView->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->treeView,SIGNAL(customContextMenuRequested(const QPoint &)),this, SLOT(slotCustomContextMenu(const QPoint &)));
 
-    ui->treeView->setContextMenuPolicy(Qt::CustomContextMenu);
+    serviceModel = new QStandardItemModel(ui->treeView);
+    connect(serviceModel, SIGNAL(itemChanged(QStandardItem*)), this,SLOT(deviceCheckChange(QStandardItem*)));
 
-    model = new QStandardItemModel(ui->treeView);
-    connect(model, SIGNAL(itemChanged(QStandardItem*)), this,SLOT(deviceCheckChange(QStandardItem*)));
-
-    itemProject = new QStandardItem(QString("湘潭电厂硬件配置"));
+    QStandardItem* itemProject = new QStandardItem(QString("湘潭电厂硬件配置"));
     itemProject->setEditable(false);
-    model->appendRow(itemProject);
-
+    serviceModel->appendRow(itemProject);
     for(int i = 0; i < mapServiceName_.size(); ++i)
     {
         QStandardItem* servicesitem = new QStandardItem(QString(mapServiceName_[ServiceNo(i)]));
@@ -117,54 +163,65 @@ ServiceManage::ServiceManage(QWidget *parent) :
             }
         }
     }
-
-    ui->treeView->setModel(model);
-    connect(SingletonRedis, SIGNAL(sendDeviceInitRequest(DeviceInitRequestMsg)), this, SLOT(receiveDeviceInitRequest(DeviceInitRequestMsg)));
+    ui->treeView->setModel(serviceModel);
 }
 
-ServiceManage::~ServiceManage()
+void ServiceManage::initAreaData()
 {
-    delete ui;
+    //显示区域treeView
+    connect(ui->treeView_area,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(areaItemDoubleClicked(QModelIndex)));
+    areaModel = new QStandardItemModel(ui->treeView_area);
+
+    QMapIterator<QString,stAreaData> itAreaData(mapAreaData);
+    while(itAreaData.hasNext())
+    {
+        itAreaData.next();
+        stAreaData areaData = itAreaData.value();
+        if(areaData.Level_ == 0)
+        {
+            QStandardItem *areaItem = new QStandardItem(areaData.AreadName_);
+            areaItem->setEditable(false);
+            areaModel->appendRow(areaItem);
+            mapAreaItem_[areaData.AreaID_] =  areaItem;
+            break;
+        }
+    }
+
+    recursionAreaData(1);
+
+    ui->treeView_area->setModel(areaModel);
 }
 
-void ServiceManage::initGroupBox()
+void ServiceManage::recursionAreaData(int level)
 {
-    FlowLayout *flowLayout_Door = new FlowLayout(ui->groupBox_Door);
-    FlowLayout *flowLayout_Infrared = new FlowLayout(ui->groupBox_Infrared);
-    FlowLayout *flowLayout_Camera = new FlowLayout(ui->groupBox_Camera);
-    FlowLayout *flowLayout_AlarmLamp = new FlowLayout(ui->groupBox_AlarmLamp);
-    FlowLayout *flowLayout_IpSound = new FlowLayout(ui->groupBox_IpSound);
-    FlowLayout *flowLayout_Location = new FlowLayout(ui->groupBox_Location);
+    bool flag = false;
+    QMapIterator<QString,stAreaData> itAreaData(mapAreaData);
+    while(itAreaData.hasNext())
+    {
+        itAreaData.next();
+        stAreaData areaData = itAreaData.value();
+        if(areaData.Level_ == level)
+        {
+            flag = true;
+            QStandardItem *areaItem = new QStandardItem(areaData.AreadName_);
+            areaItem->setEditable(false);
 
-    listQGroupBox_.push_back(ui->groupBox_Door);
-    listQGroupBox_.push_back(ui->groupBox_Infrared);
-    listQGroupBox_.push_back(ui->groupBox_Camera);
-    listQGroupBox_.push_back(ui->groupBox_AlarmLamp);
-    listQGroupBox_.push_back(ui->groupBox_IpSound);
-    listQGroupBox_.push_back(ui->groupBox_Location);
-
-    //绑定GroupBox对应设备类型，双击GroupBox过滤对应设备服务
-    mapGroupBoxName_["门禁设备"] = ACCESSCTRL;
-    mapGroupBoxName_["红外设备"] = INFRARED;
-    mapGroupBoxName_["摄像设备"] = CAMERA;
-    mapGroupBoxName_["声光告警"] = ALARMLAMP;
-    mapGroupBoxName_["语音广播"] = IPSOUND;
-    mapGroupBoxName_["定位设备"] = LOCATION;
-    mapGroupBoxName_["人数统计设备"] = COUNT;
-
-    ui->groupBox_Door->installEventFilter(this);
-    ui->groupBox_Infrared->installEventFilter(this);
-    ui->groupBox_Camera->installEventFilter(this);
-    ui->groupBox_AlarmLamp->installEventFilter(this);
-    ui->groupBox_IpSound->installEventFilter(this);
-    ui->groupBox_Location->installEventFilter(this);
+            QStandardItem *parentItem = mapAreaItem_[areaData.ParentAreaID_];
+            mapAreaItem_[areaData.AreaID_] = areaItem;
+            parentItem->appendRow(areaItem);
+        }
+    }
+    if(flag)
+    {
+        recursionAreaData(++level);
+    }
 }
 
 void ServiceManage::slotCustomContextMenu(const QPoint &pos)
 {
     Q_UNUSED(pos);
     QModelIndex currentIndex = ui->treeView->currentIndex();
-    QStandardItem* currentItem = model->itemFromIndex(currentIndex);
+    QStandardItem* currentItem = serviceModel->itemFromIndex(currentIndex);
 
     if(mapServiceName_.values().contains(currentItem->text()))
     {
@@ -195,9 +252,9 @@ void ServiceManage::slotCustomContextMenu(const QPoint &pos)
     }
 }
 
-void ServiceManage::treeViewDoubleClicked(QModelIndex index)
+void ServiceManage::serviceItemDoubleClicked(QModelIndex index)
 {
-    QStandardItem *currentItem = model->itemFromIndex(index);
+    QStandardItem *currentItem = serviceModel->itemFromIndex(index);
     if(stDeviceData* deviceData = mapDeviceItem_.value(currentItem, NULL))
     {
         dispDeviceData(deviceData->DeviceID_);
@@ -208,7 +265,7 @@ void ServiceManage::treeViewDoubleClicked(QModelIndex index)
 void ServiceManage::createService()
 {
     QModelIndex currentIndex = ui->treeView->currentIndex();
-    QStandardItem *currentItem = model->itemFromIndex(currentIndex);
+    QStandardItem *currentItem = serviceModel->itemFromIndex(currentIndex);
     QStringList listServiceID =  mapServiceID_[ServiceNo(currentIndex.row())];
 
     int iCnt = 0;
@@ -233,21 +290,21 @@ void ServiceManage::createService()
 void ServiceManage::modifyServiceName()
 {
     QModelIndex currentIndex = ui->treeView->currentIndex();
-    QStandardItem *currentItem = model->itemFromIndex(currentIndex);
+    QStandardItem *currentItem = serviceModel->itemFromIndex(currentIndex);
     currentItem->setEditable(true);
 }
 
 void ServiceManage::serviceConfigFinish()
 {
     QModelIndex currentIndex = ui->treeView->currentIndex();
-    QStandardItem *currentItem = model->itemFromIndex(currentIndex);
+    QStandardItem *currentItem = serviceModel->itemFromIndex(currentIndex);
     sendDeviceConfigMsg(currentItem);
 }
 
 void ServiceManage::deleteServiceItem()               //删除树上的服务节点
 {
     QModelIndex currentIndex = ui->treeView->currentIndex();
-    QStandardItem *currentItem = model->itemFromIndex(currentIndex);
+    QStandardItem *currentItem = serviceModel->itemFromIndex(currentIndex);
 
     if(QMessageBox::Ok == QMessageBox::warning(NULL, "警告","确认删除",QMessageBox::Ok | QMessageBox::No))
     {
@@ -283,63 +340,68 @@ void ServiceManage::deleteServiceItem()               //删除树上的服务节
     }
 }
 
-void ServiceManage::areaButtonClicked()
+void ServiceManage::areaItemDoubleClicked(QModelIndex index)
 {
-    QPushButton *areaButton = dynamic_cast<QPushButton*>(sender());
-    if(areaButton != NULL && mapAreaData.count(areaButton->objectName()))
+    QStandardItem *item = areaModel->itemFromIndex(index);
+    stAreaData areaData = mapAreaData[item->text()];
+    QString areaID = areaData.AreaID_;
+
+    clearGroupBoxButton();
+    for(int i = 0; i < listDeviceData_.size(); ++i)
     {
-        clearGroupBoxButton();
-        for(int i = 0; i < listDeviceData_.size(); ++i)
+        stDeviceData *deviceData = listDeviceData_.at(i);
+        if(deviceData->AreaID_ == areaID)
         {
-            stDeviceData *deviceData = listDeviceData_.at(i);
-            if(deviceData->AreaID_ == areaButton->objectName())
+            QPushButton *deviceButton = new QPushButton(deviceData->DeviceName_);  //显示区域名称
+            connect(deviceButton,SIGNAL(clicked()),this,SLOT(deviceButtonClicked()));
+            if(deviceData->ServiceID_.isEmpty())                   //设备没有分配服务
             {
-                QPushButton *deviceButton = new QPushButton(deviceData->DeviceName_);  //显示区域名称
-                connect(deviceButton,SIGNAL(clicked()),this,SLOT(deviceButtonClicked()));
-                if(deviceData->ServiceID_.isEmpty())                   //设备没有分配服务
-                {
-                    deviceButton->setStyleSheet(UnSelectStyleSheet);
-                }
-                else if(deviceData->Checkable_ == 1)                   //设备分配服务,被选中
-                {
-                    deviceButton->setStyleSheet(CkeckedStyleSheet);
-                }
-                else                                                   //设备分配服务，但是没被选中
-                {
-                    deviceButton->setStyleSheet(UnCkeckStyleSheet);
-                }
+                deviceButton->setStyleSheet(UnSelectStyleSheet);
+            }
+            else if(deviceData->Checkable_ == 1)                   //设备分配服务,被选中
+            {
+                deviceButton->setStyleSheet(CkeckedStyleSheet);
+            }
+            else                                                   //设备分配服务，但是没被选中
+            {
+                deviceButton->setStyleSheet(UnCkeckStyleSheet);
+            }
 
-                deviceButton->setObjectName(deviceData->DeviceID_);        //把设备ID设置成对象名字，便于单击获取设备详细信息
-                deviceButton->setMinimumWidth(153);
-                mapDeviceButton[deviceData->DeviceID_] = deviceButton;                 //保存当前显示的设备
+            deviceButton->setObjectName(deviceData->DeviceID_);        //把设备ID设置成对象名字，便于单击获取设备详细信息
+            deviceButton->setMinimumWidth(153);
+            mapDeviceButton[deviceData->DeviceID_] = deviceButton;                 //保存当前显示的设备
 
-                bool status = mapDeviceStatus.value(deviceData->DeviceID_, false);     //如果为true,已被选中
-                if(status == true)
-                {
-                    deviceButton->setStyleSheet(CkeckedStyleSheet);
-                }
+            bool status = mapDeviceStatus.value(deviceData->DeviceID_, false);     //如果为true,已被选中
+            if(status == true)
+            {
+                deviceButton->setStyleSheet(CkeckedStyleSheet);
+            }
 
-                switch(deviceData->serviceNo_)
-                {
-                case ACCESSCTRL:
-                    ui->groupBox_Door->layout()->addWidget(deviceButton);
-                    break;
-                case INFRARED:
-                    ui->groupBox_Infrared->layout()->addWidget(deviceButton);
-                    break;
-                case CAMERA:
-                    ui->groupBox_Camera->layout()->addWidget(deviceButton);
-                    break;
-                case ALARMLAMP:
-                    ui->groupBox_AlarmLamp->layout()->addWidget(deviceButton);
-                    break;
-                case IPSOUND:
-                    ui->groupBox_IpSound->layout()->addWidget(deviceButton);
-                    break;
-                case LOCATION:
-                    ui->groupBox_Location->layout()->addWidget(deviceButton);
-                    break;
-                }
+            switch(deviceData->serviceNo_)
+            {
+            case ACCESSCTRL:
+                ui->groupBox_Door->layout()->addWidget(deviceButton);
+                break;
+            case INFRARED:
+                ui->groupBox_Infrared->layout()->addWidget(deviceButton);
+                break;
+            case CAMERA:
+                ui->groupBox_Camera->layout()->addWidget(deviceButton);
+                break;
+            case ALARMLAMP:
+                ui->groupBox_AlarmLamp->layout()->addWidget(deviceButton);
+                break;
+            case IPSOUND:
+                ui->groupBox_IpSound->layout()->addWidget(deviceButton);
+                break;
+            case LOCATION:
+                ui->groupBox_Location->layout()->addWidget(deviceButton);
+                break;
+            case COUNT:
+                ui->groupBox_Counting->layout()->addWidget(deviceButton);
+                break;
+            default:
+                break;
             }
         }
     }
@@ -400,7 +462,7 @@ void ServiceManage::dispDeviceData(QString deviceID)
         static DeviceDataDisp *deviceDataDisp = new DeviceDataDisp();
         deviceDataDisp->setWindowIcon(mapServiceIcon_[deviceData->serviceNo_]);
         deviceDataDisp->setWindowTitle("设备详细信息");
-        deviceDataDisp->setDeviceData(deviceData->DeviceID_,deviceData->DeviceName_,mapAreaData[deviceData->AreaID_].AreadName_, deviceData->AreaID_,deviceData->DeviceIp_,deviceData->DevicePort_,deviceData->DeviceUser_,deviceData->DevicePasswd,deviceData->ServiceID_);
+        deviceDataDisp->setDeviceData(deviceData->DeviceID_,deviceData->DeviceName_,getAreaNameById(deviceData->AreaID_), deviceData->AreaID_,deviceData->DeviceIp_,deviceData->DevicePort_,deviceData->DeviceUser_,deviceData->DevicePasswd,deviceData->ServiceID_);
         deviceDataDisp->show();
     }
 }
@@ -409,9 +471,10 @@ void ServiceManage::sendDeviceConfigMsg(QStandardItem *serviceItem)
 {
     SafeManageMainMsg safeManageMsg;
     safeManageMsg.set_msgtype(TYPE_DEVICECONFIGMSG);
-    DeviceConfigMsg* deviceConfigMsg = safeManageMsg.mutable_deviceconfigmsg();
 
-    DeviceType deviceType = DeviceType(serviceItem->parent()->row());
+    DeviceType deviceType = mapServiceType_[serviceItem->parent()->text()];
+
+    DeviceConfigMsg* deviceConfigMsg = safeManageMsg.mutable_deviceconfigmsg();
     deviceConfigMsg->set_type(deviceType);
     deviceConfigMsg->set_serviceid(serviceItem->text().toStdString());
 
@@ -456,16 +519,32 @@ void ServiceManage::modifyServiceStatus(QString serviceID, int status)
     mapServiceStatus_[serviceID] = status;
 }
 
+QString ServiceManage::getAreaNameById(QString areaId)
+{
+    QString areaName;
+    QMapIterator<QString,stAreaData> itAreaData(mapAreaData);
+    while(itAreaData.hasNext())
+    {
+        itAreaData.next();
+        stAreaData areaData = itAreaData.value();
+        if(areaData.AreaID_ == areaId)
+        {
+            areaName = itAreaData.key();
+        }
+    }
+    return areaName;
+}
+
 
 bool ServiceManage::eventFilter(QObject *obj, QEvent *event)
 {
     QGroupBox *groupBox = dynamic_cast<QGroupBox*>(obj);
-    if(listQGroupBox_.contains(groupBox) && event->type() == QEvent::MouseButtonDblClick)
+    if(listGroupBox_.contains(groupBox) && event->type() == QEvent::MouseButtonDblClick)
     {
         QObjectList listObject = groupBox->children();
-        if(listObject.size() > 1)
+        if(listObject.size() >= 0)
         {
-            ServiceNo serviceNo = mapGroupBoxName_[groupBox->title()];
+            ServiceNo serviceNo = mapGroupBoxTitle_[groupBox->title()];
 
             QTableWidget *tableServiceID = new QTableWidget();
             tableServiceID->setColumnCount(1);
@@ -473,6 +552,7 @@ bool ServiceManage::eventFilter(QObject *obj, QEvent *event)
             tableServiceID->setEditTriggers(QAbstractItemView::NoEditTriggers);    //设置内容不可更改
             tableServiceID->horizontalHeader()->setStretchLastSection(true);
             tableServiceID->horizontalHeader()->hide();
+
             for(int i = 0; i < mapServiceID_[serviceNo].size(); ++i)
             {
                 int rowCount = tableServiceID->rowCount();
@@ -494,9 +574,9 @@ bool ServiceManage::eventFilter(QObject *obj, QEvent *event)
 
 void ServiceManage::clearGroupBoxButton()
 {
-    for(int i = 0; i < listQGroupBox_.size(); ++i)
+    for(int i = 0; i < listGroupBox_.size(); ++i)
     {
-        QGroupBox *groupBox = listQGroupBox_.at(i);
+        QGroupBox *groupBox = listGroupBox_.at(i);
         QObjectList listObject = groupBox->children();
 
         for(int j = 0; j < listObject.size(); ++j)

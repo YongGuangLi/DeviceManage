@@ -17,7 +17,7 @@ MainWidget::MainWidget(QWidget *parent) :
     }
 
     //连接redis
-    //SingletonRedis->open(SingletonConfig->getIpRedis(), SingletonConfig->getPortRedis());
+    SingletonRedis->open(SingletonConfig->getIpRedis(), SingletonConfig->getPortRedis());
 
     ui->label_ProgressManage->installEventFilter(this);
     ui->label_ServiceManage->installEventFilter(this);
@@ -149,8 +149,17 @@ void MainWidget::receiveDevicesStatus(DevicesStatusMsg devicesStatusMsg)
        QString areaID = deviceStatusMsg.areaid().c_str();
        QString deviceID = deviceStatusMsg.deviceid().c_str();
        DeviceStatusType status = deviceStatusMsg.status();
-       ui->textBrowser->append(QString("服务ID:%1   区域ID:%2   设备ID:%3   设备状态：%4").
-                               arg(serviceID).arg(areaID).arg(deviceID).arg(mapDeviceStatus_[status]));
+       QString logInfo = QString("服务ID:%1 区域ID:%2 设备ID:%3 设备状态：%4").
+                                      arg(serviceID).arg(areaID).arg(deviceID).arg(mapDeviceStatus_[status]);
+       if(TYPE_OFFLINE == status)
+       {
+           ui->textBrowser->insertHtml(QString("<br><span style=\" color:#%1;\">%2</span>").arg("FF0000").arg(logInfo));
+       }
+       else
+       {
+           ui->textBrowser->insertHtml(QString("<br><span style=\" color:#%1;\">%2</span>").arg("000000").arg(logInfo));
+       }
+
    }
 }
 
@@ -239,7 +248,7 @@ void MainWidget::deleteProcess()
             sendProcessCmd(serviceID, TYPE_DELETE);
             SingletonDBHelper->modifyService(serviceID, 0);
             serviceManage_->modifyServiceStatus(serviceID, 0);
-
+            ui->tableWidget->removeRow(row);
         }
     }
 }

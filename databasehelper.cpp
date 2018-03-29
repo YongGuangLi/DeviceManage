@@ -1,7 +1,7 @@
 #include "databasehelper.h"
 
 
-#define SQL_AREADATA "select area_id,area_name,level from ws_area"
+#define SQL_AREADATA "select area_id,area_name,level,parent_id from ws_area"
 #define SQL_DEVICEDATA "select device_id,device_name,area_id,device_type,ip,port,device_username, \
 password,service_id,checkable from ws_device"
 
@@ -32,12 +32,14 @@ DataBaseHelper *DataBaseHelper::GetInstance()
 DataBaseHelper::DataBaseHelper(QObject *parent) :
     QObject(parent)
 {
+    //把平台添加的设备类型和本程序的设备类型相对应
     mapDeviceType["DOOR"] = ACCESSCTRL;
     mapDeviceType["INFRARED"] = INFRARED;
     mapDeviceType["VIDEO"] = CAMERA;
     mapDeviceType["ALARM"] = ALARMLAMP;
     mapDeviceType["IPSOUND"] = IPSOUND;
     mapDeviceType["LOCAL"] = LOCATION;
+    mapDeviceType["COUNT_CAMERA"] = COUNT;
 }
 
 bool DataBaseHelper::open(QString ip, int port, QString dbName, QString user, QString passwd)
@@ -110,6 +112,7 @@ void DataBaseHelper::readDeviceDataFromDB(QList<stDeviceData*>& listDeviceData)
     }
 }
 
+//读取区域信息
 void DataBaseHelper::readAreaDataFromDB(QMap<QString,stAreaData> &mapAreaData)
 {
     {
@@ -124,8 +127,10 @@ void DataBaseHelper::readAreaDataFromDB(QMap<QString,stAreaData> &mapAreaData)
             stAreaData areaData;
             areaData.AreaID_ =  query.value(0).toString();
             areaData.AreadName_ =  query.value(1).toString();
-            areaData.level_ =  query.value(2).toInt();
-            mapAreaData[areaData.AreaID_] = areaData;
+            areaData.Level_ =  query.value(2).toInt();
+            areaData.ParentAreaID_ = query.value(3).toString();
+
+            mapAreaData[areaData.AreadName_] = areaData;
         }
     }
 }
