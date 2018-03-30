@@ -34,7 +34,10 @@ ConfigIni::ConfigIni(QObject *parent) : QObject(parent)
         settings_->beginGroup("PATH");
         path_ = settings_->value("path").toString();
         settings_->endGroup();
-
+    }
+    else
+    {
+        qWarning()<<QCoreApplication::applicationDirPath() + "/config.ini" + " not exist";
     }
 }
 

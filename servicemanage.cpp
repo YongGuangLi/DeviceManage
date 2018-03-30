@@ -33,13 +33,6 @@ ServiceManage::ServiceManage(QWidget *parent) :
     mapServiceName_[LOCATION] = "定位服务程序";
     mapServiceName_[COUNT] = "人数统计服务程序";
 
-    mapServiceType_["门禁服务程序"] = TYPE_ACCESSCTRL;
-    mapServiceType_["红外服务程序"] = TYPE_INFRARED;
-    mapServiceType_["视频服务程序"] = TYPE_CAMERA;
-    mapServiceType_["声光告警服务程序"] = TYPE_ALARMLAMP;
-    mapServiceType_["语音广播服务程序"] = TYPE_IPSOUND;
-    mapServiceType_["定位服务程序"] = TYPE_LOCATION;
-    mapServiceType_["人数统计服务程序"] = TYPE_CAMERA_COUNT;
 
     mapServicePrefix_[ACCESSCTRL] = "Door";
     mapServicePrefix_[INFRARED] = "Infrared";
@@ -48,6 +41,15 @@ ServiceManage::ServiceManage(QWidget *parent) :
     mapServicePrefix_[IPSOUND] = "Speaker";
     mapServicePrefix_[LOCATION] = "Location";
     mapServicePrefix_[COUNT] = "Counting";
+
+    mapServiceType_["门禁服务程序"] = TYPE_ACCESSCTRL;
+    mapServiceType_["红外服务程序"] = TYPE_INFRARED;
+    mapServiceType_["视频服务程序"] = TYPE_CAMERA;
+    mapServiceType_["声光告警服务程序"] = TYPE_ALARMLAMP;
+    mapServiceType_["语音广播服务程序"] = TYPE_IPSOUND;
+    mapServiceType_["定位服务程序"] = TYPE_LOCATION;
+    mapServiceType_["人数统计服务程序"] = TYPE_CAMERA_COUNT;
+
 
 
     SingletonDBHelper->readAreaDataFromDB(this->mapAreaData);
@@ -309,34 +311,35 @@ void ServiceManage::deleteServiceItem()               //删除树上的服务节
     if(QMessageBox::Ok == QMessageBox::warning(NULL, "警告","确认删除",QMessageBox::Ok | QMessageBox::No))
     {
         QString serviceID = currentItem->text();
-        SingletonDBHelper->deleteService(serviceID);
-        mapServiceItem_.remove(serviceID);                                 //删除服务节点
-
-        ServiceNo serviceNo = ServiceNo(currentItem->parent()->row());
-        mapServiceID_[serviceNo].removeOne(serviceID);                     //在保存所有服务的map中删除服务
-
-        int rowCount = currentItem->rowCount();
-        for(int i = 0; i < rowCount; ++i)
+        if(SingletonDBHelper->deleteService(serviceID))
         {
-            QStandardItem * deviceItem = currentItem->child(i);
-            if(stDeviceData* deviceData = mapDeviceItem_.value(deviceItem, NULL))
+            mapServiceItem_.remove(serviceID);                                 //删除服务节点
+
+            ServiceNo serviceNo = ServiceNo(currentItem->parent()->row());
+            mapServiceID_[serviceNo].removeOne(serviceID);                     //在保存所有服务的map中删除服务
+
+            int rowCount = currentItem->rowCount();
+            for(int i = 0; i < rowCount; ++i)
             {
-                QString deviceID = deviceData->DeviceID_;
-                if(SingletonDBHelper->modifyDeviceServiceID(deviceID, 0, ""))
+                QStandardItem * deviceItem = currentItem->child(i);
+                if(stDeviceData* deviceData = mapDeviceItem_.value(deviceItem, NULL))
                 {
-                    deviceData->Checkable_ = 0;
-                    deviceData->ServiceID_ = "";
-                    mapDeviceItem_.remove(deviceItem);                              //删除设备节点
-                    mapDeviceStatus[deviceID] = false;
-                    QPushButton *deviceButton = mapDeviceButton.value(deviceID, NULL);
-                    if(deviceButton != NULL)
+                    QString deviceID = deviceData->DeviceID_;
+                    if(SingletonDBHelper->modifyDeviceServiceID(deviceID, 0, ""))
                     {
-                        deviceButton->setStyleSheet(UnSelectStyleSheet);
+                        deviceData->Checkable_ = 0;
+                        deviceData->ServiceID_ = "";
+                        mapDeviceItem_.remove(deviceItem);                                 //删除设备树节点
+                        QPushButton *deviceButton = mapDeviceButton.value(deviceID, NULL);
+                        if(deviceButton != NULL)
+                        {
+                            deviceButton->setStyleSheet(UnSelectStyleSheet);
+                        }
                     }
                 }
             }
+            currentItem->parent()->removeRow(currentIndex.row());
         }
-        currentItem->parent()->removeRow(currentIndex.row());
     }
 }
 
@@ -353,29 +356,23 @@ void ServiceManage::areaItemDoubleClicked(QModelIndex index)
         if(deviceData->AreaID_ == areaID)
         {
             QPushButton *deviceButton = new QPushButton(deviceData->DeviceName_);  //显示区域名称
-            connect(deviceButton,SIGNAL(clicked()),this,SLOT(deviceButtonClicked()));
-            if(deviceData->ServiceID_.isEmpty())                   //设备没有分配服务
-            {
-                deviceButton->setStyleSheet(UnSelectStyleSheet);
-            }
-            else if(deviceData->Checkable_ == 1)                   //设备分配服务,被选中
-            {
-                deviceButton->setStyleSheet(CkeckedStyleSheet);
-            }
-            else                                                   //设备分配服务，但是没被选中
-            {
-                deviceButton->setStyleSheet(UnCkeckStyleSheet);
-            }
-
             deviceButton->setObjectName(deviceData->DeviceID_);        //把设备ID设置成对象名字，便于单击获取设备详细信息
             deviceButton->setMinimumWidth(153);
-            mapDeviceButton[deviceData->DeviceID_] = deviceButton;                 //保存当前显示的设备
-
-            bool status = mapDeviceStatus.value(deviceData->DeviceID_, false);     //如果为true,已被选中
-            if(status == true)
+            if(deviceData->ServiceID_.isEmpty())
             {
-                deviceButton->setStyleSheet(CkeckedStyleSheet);
+                deviceButton->setStyleSheet(UnSelectStyleSheet);  //设备没有选择服务
             }
+            else if(deviceData->Checkable_ == 1)
+            {
+                deviceButton->setStyleSheet(CkeckedStyleSheet);    //设备选择服务,并且被勾选
+            }
+            else
+            {
+                deviceButton->setStyleSheet(UnCkeckStyleSheet);   //设备选择服务，但是没被勾选
+            }
+            connect(deviceButton,SIGNAL(clicked()),this,SLOT(deviceButtonClicked()));
+
+            mapDeviceButton[deviceData->DeviceID_] = deviceButton;                 //保存当前显示的设备
 
             switch(deviceData->serviceNo_)
             {
@@ -417,8 +414,10 @@ void ServiceManage::deviceCheckChange(QStandardItem *deviceItem)
             {
                 mapDeviceButton[deviceData->DeviceID_]->setStyleSheet(CkeckedStyleSheet);
             }
-            SingletonDBHelper->modifyDeviceCheck(deviceData->DeviceID_, 1);
-            mapDeviceStatus[deviceData->DeviceID_] = true;
+            if(SingletonDBHelper->modifyDeviceCheck(deviceData->DeviceID_, 1))
+            {
+                findDeviceDataByID(deviceData->DeviceID_)->Checkable_ = 1;
+            }
         }
     }
     else if(deviceItem->checkState() == Qt::Unchecked)      //取消选中
@@ -429,8 +428,10 @@ void ServiceManage::deviceCheckChange(QStandardItem *deviceItem)
             {
                 mapDeviceButton[deviceData->DeviceID_]->setStyleSheet(UnCkeckStyleSheet);
             }
-            SingletonDBHelper->modifyDeviceCheck(deviceData->DeviceID_, 0);
-            mapDeviceStatus[deviceData->DeviceID_] = false;
+            if(SingletonDBHelper->modifyDeviceCheck(deviceData->DeviceID_, 0))
+            {
+                findDeviceDataByID(deviceData->DeviceID_)->Checkable_ = 0;
+            }
         }
     }
 }
@@ -601,23 +602,24 @@ void ServiceManage::addDeviceItem(QString serviceId, QObjectList listObject)
         {
             QString deviceID = button->objectName();
             QString deviceName = button->text();
-            QStandardItem *deviceItem = findDeviceItemByID(deviceID); //查看树节点是否已有该设备ID
-            if(deviceItem == NULL)                                     //没有
+            QStandardItem *deviceItem = findDeviceItemByID(deviceID); //查看所有树节点是否已有该设备ID
+            if(deviceItem != NULL)
+                continue;
+
+            if(SingletonDBHelper->modifyDeviceServiceID(deviceID, 1, serviceId))
             {
                 deviceItem = new QStandardItem(deviceName);
                 deviceItem->setCheckable(true);
                 deviceItem->setCheckState(Qt::Checked);
                 deviceItem->setEditable(false);
                 serviceItem->appendRow(deviceItem);
-                mapDeviceStatus[deviceID] = true;              //设备选中服务
-                mapDeviceButton[deviceID]->setStyleSheet(CkeckedStyleSheet);
-                findDeviceDataByID(deviceID)->ServiceID_ = serviceId;   //修改设备服务ID
-                findDeviceDataByID(deviceID)->Checkable_ = 1;
-                SingletonDBHelper->modifyDeviceServiceID(deviceID, 1, serviceId);
 
-                //保存所有设备树节点信息
+                mapDeviceButton[deviceID]->setStyleSheet(CkeckedStyleSheet);
+
                 stDeviceData *deviceData = findDeviceDataByID(deviceID);
-                mapDeviceItem_[deviceItem] = deviceData;
+                deviceData->ServiceID_ = serviceId;       //修改设备服务ID
+                deviceData->Checkable_ = 1;               //设备选中
+                mapDeviceItem_[deviceItem] = deviceData;      //保存所有设备树节点信息
             }
         }
     }
@@ -661,28 +663,11 @@ void ServiceManage::receiveDeviceInitRequest(DeviceInitRequestMsg deviceInitRequ
 {
     QString serviceID = deviceInitRequest.serviceid().c_str();
     qDebug()<<"receiveDeviceInitRequest:"<<serviceID<<" Type:"<<deviceInitRequest.type();
-    if(serviceID == DATACENTER)
+    QStandardItem* serviceItem = mapServiceItem_.value(serviceID, NULL);
+    if(serviceItem == NULL)
     {
-        QStringList listServiceID = mapServiceID_[ServiceNo(deviceInitRequest.type())];
-        for(int i = 0; i < listServiceID.size(); ++i)
-        {
-            int status = mapServiceStatus_.value(listServiceID.at(i), 0);
-            if(status == 1)
-            {
-                QStandardItem* serviceItem = mapServiceItem_.value(listServiceID.at(i), NULL);
-                if(serviceItem != NULL)
-                {
-                    sendDeviceConfigMsg(serviceItem);
-                }
-            }
-        }
+        qWarning()<<serviceID<<" not exist";
+        return;
     }
-    else
-    {
-        QStandardItem* serviceItem = mapServiceItem_.value(serviceID, NULL);
-        if(serviceItem != NULL)
-        {
-            sendDeviceConfigMsg(serviceItem);
-        }
-    }
+    sendDeviceConfigMsg(serviceItem);
 }

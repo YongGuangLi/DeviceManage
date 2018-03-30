@@ -65,7 +65,7 @@ bool DataBaseHelper::open(QString ip, int port, QString dbName, QString user, QS
         }
         else
         {
-            qDebug()<<"Mysql Connect Fail:"<<ip;
+            qWarning()<<"Mysql Connect Failure:"<<ip;
         }
     }
     return isopen;
@@ -78,7 +78,7 @@ void DataBaseHelper::readDeviceDataFromDB(QList<stDeviceData*>& listDeviceData)
         QSqlQuery query(QString(SQL_DEVICEDATA));
         if(query.lastError().isValid())
         {
-            qDebug()<<query.lastError().text();
+            qWarning()<<query.lastError().text();
             return;
         }
         while(query.next())
@@ -119,7 +119,7 @@ void DataBaseHelper::readAreaDataFromDB(QMap<QString,stAreaData> &mapAreaData)
         QSqlQuery query(QString(SQL_AREADATA));
         if(query.lastError().isValid())
         {
-            qDebug()<<query.lastError().text();
+            qWarning()<<query.lastError().text();
             return;
         }
         while(query.next())
@@ -142,7 +142,7 @@ bool DataBaseHelper::modifyDeviceServiceID(QString deviceID,int checkable, QStri
 
         if(query.lastError().isValid())
         {
-            qDebug()<<query.lastError().text();
+            qWarning()<<query.lastError().text();
             return false;
         }
         else
@@ -160,7 +160,7 @@ bool DataBaseHelper::writeServiceDataToDB(QString serviceID, int serviceType)
 
         if(query.lastError().isValid())
         {
-            qDebug()<<query.lastError().text();
+            qWarning()<<query.lastError().text();
             return false;
         }
         else
@@ -176,7 +176,7 @@ void DataBaseHelper::readServiceDataFromDB(QMap<ServiceNo, QStringList> &mapServ
     QSqlQuery query(QString(SQL_SERVICRDATA));
     if(query.lastError().isValid())
     {
-        qDebug()<<query.lastError().text();
+        qWarning()<<query.lastError().text();
         return;
     }
     while(query.next())
@@ -194,7 +194,7 @@ bool DataBaseHelper::modifyDeviceCheck(QString deviceID, int checkable)
     QSqlQuery query(QString(SQL_DEVICECHECKABLE).arg(checkable).arg(deviceID));
     if(query.lastError().isValid())
     {
-        qDebug()<<query.lastError().text();
+        qWarning()<<query.lastError().text();
         return false;
     }
     else
@@ -210,7 +210,7 @@ bool DataBaseHelper::deleteService(QString serviceID)
 
     if(query.lastError().isValid())
     {
-        qDebug()<<query.lastError().text();
+        qWarning()<<query.lastError().text();
     }
     else
     {
@@ -227,7 +227,7 @@ bool DataBaseHelper::modifyService(QString serviceID, int serviceStatus)
 
     if(query.lastError().isValid())
     {
-        qDebug()<<query.lastError().text();
+        qWarning()<<query.lastError().text();
     }
     else
     {

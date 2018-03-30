@@ -245,10 +245,13 @@ void MainWidget::deleteProcess()
         {
             QString serviceID = ui->tableWidget->item(row, 0)->text();
             qDebug()<<"Delete Service:"<<serviceID;
-            sendProcessCmd(serviceID, TYPE_DELETE);
-            SingletonDBHelper->modifyService(serviceID, 0);
-            serviceManage_->modifyServiceStatus(serviceID, 0);
-            ui->tableWidget->removeRow(row);
+
+            if(SingletonDBHelper->modifyService(serviceID, 0))
+            {
+                sendProcessCmd(serviceID, TYPE_DELETE);
+                serviceManage_->modifyServiceStatus(serviceID, 0);
+                ui->tableWidget->removeRow(row);
+            }
         }
     }
 }

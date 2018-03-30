@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QObject>
 #include <QFile>
+#include <QDebug>
 #include <QSettings>
 
 #define SingletonConfig ConfigIni::GetInstance()

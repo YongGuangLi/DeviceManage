@@ -1,8 +1,8 @@
 #include "mainwidget.h"
 #include "stylehelper.h"
 #include "win32fixes.h"
-#include "log4qt/logmanager.h"
 #include "log4qt/propertyconfigurator.h"
+#include "log4qt/logmanager.h"
 #include <QApplication>
 #include <QTextCodec>
 
