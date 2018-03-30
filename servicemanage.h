@@ -82,7 +82,6 @@ private slots:
     void deviceCheckChange(QStandardItem*);     //修改设备节点的复选框
     void selectServiceID(QTableWidgetItem *);   //为设备选择服务ID
     void deviceButtonClicked();                 //点击设备按键
-    void on_pushButton_clicked();
 
     void receiveDeviceInitRequest(DeviceInitRequestMsg);
 private:

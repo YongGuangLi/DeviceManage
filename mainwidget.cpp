@@ -13,7 +13,7 @@ MainWidget::MainWidget(QWidget *parent) :
     //连接mysql
     if(!SingletonDBHelper->open(SingletonConfig->getIpMySql(),SingletonConfig->getPortMySql(),SingletonConfig->getDbName(), SingletonConfig->getUserMysql(),SingletonConfig->getPasswdMysql()))
     {
-        qDebug()<<SingletonDBHelper->getError();
+        qWarning()<<SingletonDBHelper->getError();
     }
 
     //连接redis

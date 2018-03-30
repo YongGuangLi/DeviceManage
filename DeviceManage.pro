@@ -8,6 +8,8 @@ QT       += core gui sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+include(C:/Users/LiyG/Desktop/log4qt-0.3/src/log4qt/log4qt.pri)
+
 TARGET = DeviceManage
 TEMPLATE = app
 

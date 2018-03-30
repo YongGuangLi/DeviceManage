@@ -656,10 +656,6 @@ stDeviceData* ServiceManage::findDeviceDataByID(QString deviceID)
     return NULL;
 }
 
-void ServiceManage::on_pushButton_clicked()
-{
-    qDebug()<<ui->lineEdit_Serach->text();
-}
 
 void ServiceManage::receiveDeviceInitRequest(DeviceInitRequestMsg deviceInitRequest)
 {
