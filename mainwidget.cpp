@@ -153,11 +153,11 @@ void MainWidget::receiveDevicesStatus(DevicesStatusMsg devicesStatusMsg)
                                       arg(serviceID).arg(areaID).arg(deviceID).arg(mapDeviceStatus_[status]);
        if(TYPE_OFFLINE == status)
        {
-           ui->textBrowser->insertHtml(QString("<br><span style=\" color:#%1;\">%2</span>").arg("FF0000").arg(logInfo));
+           ui->textBrowser->append(QString("<span style=\" color:#%1;\">%2</span>").arg("FF0000").arg(logInfo));
        }
        else
        {
-           ui->textBrowser->insertHtml(QString("<br><span style=\" color:#%1;\">%2</span>").arg("000000").arg(logInfo));
+           ui->textBrowser->append(QString("<span style=\" color:#%1;\">%2</span>").arg("000000").arg(logInfo));
        }
 
    }

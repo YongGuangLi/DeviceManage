@@ -410,12 +410,12 @@ void ServiceManage::deviceCheckChange(QStandardItem *deviceItem)
     {
         if(stDeviceData* deviceData = mapDeviceItem_.value(deviceItem, NULL))
         {
-            if(mapDeviceButton.value(deviceData->DeviceID_, NULL))
-            {
-                mapDeviceButton[deviceData->DeviceID_]->setStyleSheet(CkeckedStyleSheet);
-            }
             if(SingletonDBHelper->modifyDeviceCheck(deviceData->DeviceID_, 1))
             {
+                if(mapDeviceButton.value(deviceData->DeviceID_, NULL))
+                {
+                    mapDeviceButton[deviceData->DeviceID_]->setStyleSheet(CkeckedStyleSheet);
+                }
                 findDeviceDataByID(deviceData->DeviceID_)->Checkable_ = 1;
             }
         }
@@ -424,12 +424,12 @@ void ServiceManage::deviceCheckChange(QStandardItem *deviceItem)
     {
         if(stDeviceData* deviceData = mapDeviceItem_.value(deviceItem, NULL))
         {
-            if(mapDeviceButton.value(deviceData->DeviceID_, NULL))
-            {
-                mapDeviceButton[deviceData->DeviceID_]->setStyleSheet(UnCkeckStyleSheet);
-            }
             if(SingletonDBHelper->modifyDeviceCheck(deviceData->DeviceID_, 0))
             {
+                if(mapDeviceButton.value(deviceData->DeviceID_, NULL))
+                {
+                    mapDeviceButton[deviceData->DeviceID_]->setStyleSheet(UnCkeckStyleSheet);
+                }
                 findDeviceDataByID(deviceData->DeviceID_)->Checkable_ = 0;
             }
         }
