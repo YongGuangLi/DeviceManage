@@ -90,15 +90,15 @@ private:
 
     QStandardItemModel* areaModel;
 
-    QMap<QString,DeviceType> mapServiceType_;
 
-    QMap<ServiceNo,QIcon> mapServiceIcon_;       //服务类型、服务图标
-    QMap<ServiceNo,QString> mapServiceName_;     //服务类型、服务名字
-    QMap<ServiceNo,QString> mapServicePrefix_;   //服务类型、新建服务名字前缀
+    QMap<DeviceType,QIcon> mapServiceIcon_;       //服务类型、服务类型图标
+    QMap<DeviceType,QString> mapServiceTypeName_; //服务类型、服务类型名字
+    QMap<QString,DeviceType> mapServiceType_;     //服务类型名字、服务类型
+    QMap<DeviceType,QString> mapServicePrefix_;   //服务类型、新建服务名字前缀
 
     QMap<QString,stAreaData> mapAreaData;        //区域名、区域信息
 
-    QMap<ServiceNo,QStringList> mapServiceID_;     //所有服务ID
+    QMap<DeviceType,QStringList> mapServiceID_;    //不同服务类型下所有服务ID
     QMap<QString, int> mapServiceStatus_;          //所有服务状态
 
     QMap<QString,QStandardItem*> mapServiceItem_;   //保存所有服务的树节点
@@ -107,7 +107,7 @@ private:
     QList<stDeviceData*> listDeviceData_;          //所有设备信息,用指针便于修改值
 
     QList<QGroupBox*> listGroupBox_;               //保存GroupBox指针
-    QMap<QString,ServiceNo> mapGroupBoxTitle_;     //保存GroupBox名字对应设备类型
+    QMap<QString,DeviceType> mapGroupBoxTitle_;     //保存GroupBox名字对应设备类型
 
     QMap<QString, QPushButton*> mapDeviceButton;  //保存当前所选区域的设备按键，切换区域，清空
 

@@ -10,6 +10,7 @@
 #include <QList>
 #include <QSqlQuery>
 #include "datatype.h"
+#include "SafeManageMsg.pb.h"
 
 #define SingletonDBHelper DataBaseHelper::GetInstance()
 
@@ -27,7 +28,7 @@ public:
     bool modifyDeviceCheck(QString deviceID, int checkable);
 
     bool writeServiceDataToDB(QString serviceID, int serviceType);
-    void readServiceDataFromDB(QMap<ServiceNo,QStringList> &mapServiceID,QMap<QString, int>&);
+    void readServiceDataFromDB(QMap<DeviceType,QStringList> &mapServiceID,QMap<QString, int>&);
     bool deleteService(QString serviceID);
 
     bool modifyService(QString serviceID, int serviceStatus);
@@ -43,7 +44,7 @@ private:
     QString dbName_;
     QString user_;
     QString passwd_;
-    QMap<QString,ServiceNo> mapDeviceType;   //设备类型对应的服务类型
+    QMap<QString,DeviceType> mapDeviceType;   //设备类型对应的服务类型
 signals:
     
 public slots:

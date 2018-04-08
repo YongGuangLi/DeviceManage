@@ -33,13 +33,13 @@ DataBaseHelper::DataBaseHelper(QObject *parent) :
     QObject(parent)
 {
     //把平台添加的设备类型和本程序的设备类型相对应
-    mapDeviceType["DOOR"] = ACCESSCTRL;
-    mapDeviceType["INFRARED"] = INFRARED;
-    mapDeviceType["VIDEO"] = CAMERA;
-    mapDeviceType["ALARM"] = ALARMLAMP;
-    mapDeviceType["IPSOUND"] = IPSOUND;
-    mapDeviceType["LOCAL"] = LOCATION;
-    mapDeviceType["COUNT_CAMERA"] = COUNT;
+    mapDeviceType["DOOR"] = TYPE_ACCESSCTRL;
+    mapDeviceType["INFRARED"] = TYPE_INFRARED;
+    mapDeviceType["VIDEO"] = TYPE_CAMERA;
+    mapDeviceType["ALARM"] = TYPE_ALARMLAMP;
+    mapDeviceType["IPSOUND"] = TYPE_IPSOUND;
+    mapDeviceType["LOCAL"] = TYPE_LOCATION;
+    mapDeviceType["COUNT_CAMERA"] = TYPE_CAMERA_COUNT;
 }
 
 bool DataBaseHelper::open(QString ip, int port, QString dbName, QString user, QString passwd)
@@ -104,7 +104,7 @@ void DataBaseHelper::readDeviceDataFromDB(QList<stDeviceData*>& listDeviceData)
             deviceData->DevicePasswd = password;
             deviceData->ServiceID_ = service_id;
             deviceData->Checkable_ = checkable;
-            deviceData->serviceNo_ = mapDeviceType.value(device_type);
+            deviceData->deviceType_ = mapDeviceType.value(device_type);
 
             listDeviceData.push_back(deviceData);
             //qDebug()<<device_id<<device_name<<area_id<<device_type<<ip<<port<<device_username<<password<<service_id<<checkable;
@@ -170,7 +170,7 @@ bool DataBaseHelper::writeServiceDataToDB(QString serviceID, int serviceType)
     }
 }
 
-void DataBaseHelper::readServiceDataFromDB(QMap<ServiceNo, QStringList> &mapServiceID, QMap<QString, int> &mapServiceStatus)
+void DataBaseHelper::readServiceDataFromDB(QMap<DeviceType, QStringList> &mapServiceID, QMap<QString, int> &mapServiceStatus)
 {
 
     QSqlQuery query(QString(SQL_SERVICRDATA));
@@ -184,7 +184,7 @@ void DataBaseHelper::readServiceDataFromDB(QMap<ServiceNo, QStringList> &mapServ
         QString serviceID = query.value(0).toString();
         int serviceType = query.value(1).toInt();
         int serviceStatus = query.value(2).toInt();
-        mapServiceID[ServiceNo(serviceType)].push_back(serviceID);
+        mapServiceID[DeviceType(serviceType)].push_back(serviceID);
         mapServiceStatus[serviceID] = serviceStatus;
     }
 }
