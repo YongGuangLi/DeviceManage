@@ -198,59 +198,68 @@ void MainWidget::showCtrlMenu(QPoint pos)
 
 void MainWidget::restartProcess()
 {
-    QList<QTableWidgetSelectionRange> selectedRanges = ui->tableWidget->selectedRanges();
-    for(int i = 0; i < selectedRanges.size(); ++i)
+    if(QMessageBox::Ok == QMessageBox::warning(NULL, "警告","确认重启",QMessageBox::Ok | QMessageBox::No))
     {
-        QTableWidgetSelectionRange  selectedRange =  selectedRanges.at(i);
-        int topRow = selectedRange.topRow();
-        int bottomRow = selectedRange.bottomRow();
-
-        for(int row = topRow; row <= bottomRow; ++row)
+        QList<QTableWidgetSelectionRange> selectedRanges = ui->tableWidget->selectedRanges();
+        for(int i = 0; i < selectedRanges.size(); ++i)
         {
-            QString serviceID = ui->tableWidget->item(row, 0)->text();
-            qDebug()<<"Restart Service:"<<serviceID;
-            sendProcessCmd(serviceID, TYPE_RESTART);
+            QTableWidgetSelectionRange  selectedRange =  selectedRanges.at(i);
+            int topRow = selectedRange.topRow();
+            int bottomRow = selectedRange.bottomRow();
+
+            for(int row = topRow; row <= bottomRow; ++row)
+            {
+                QString serviceID = ui->tableWidget->item(row, 0)->text();
+                qDebug()<<"Restart Service:"<<serviceID;
+                sendProcessCmd(serviceID, TYPE_RESTART);
+            }
         }
     }
 }
 
 void MainWidget::stopProcess()
 {
-    QList<QTableWidgetSelectionRange> selectedRanges = ui->tableWidget->selectedRanges();
-    for(int i = 0; i < selectedRanges.size(); ++i)
+    if(QMessageBox::Ok == QMessageBox::warning(NULL, "警告","确认停止",QMessageBox::Ok | QMessageBox::No))
     {
-        QTableWidgetSelectionRange  selectedRange =  selectedRanges.at(i);
-        int topRow = selectedRange.topRow();
-        int bottomRow = selectedRange.bottomRow();
-
-        for(int row = topRow; row <= bottomRow; ++row)
+        QList<QTableWidgetSelectionRange> selectedRanges = ui->tableWidget->selectedRanges();
+        for(int i = 0; i < selectedRanges.size(); ++i)
         {
-            QString serviceID = ui->tableWidget->item(row, 0)->text();
-            qDebug()<<"Stop Service:"<<serviceID;
-            sendProcessCmd(serviceID, TYPE_STOP);
+            QTableWidgetSelectionRange  selectedRange =  selectedRanges.at(i);
+            int topRow = selectedRange.topRow();
+            int bottomRow = selectedRange.bottomRow();
+
+            for(int row = topRow; row <= bottomRow; ++row)
+            {
+                QString serviceID = ui->tableWidget->item(row, 0)->text();
+                qDebug()<<"Stop Service:"<<serviceID;
+                sendProcessCmd(serviceID, TYPE_STOP);
+            }
         }
     }
 }
 
 void MainWidget::deleteProcess()
 {
-    QList<QTableWidgetSelectionRange> selectedRanges = ui->tableWidget->selectedRanges();
-    for(int i = 0; i < selectedRanges.size(); ++i)
+    if(QMessageBox::Ok == QMessageBox::warning(NULL, "警告","确认删除",QMessageBox::Ok | QMessageBox::No))
     {
-        QTableWidgetSelectionRange  selectedRange =  selectedRanges.at(i);
-        int topRow = selectedRange.topRow();
-        int bottomRow = selectedRange.bottomRow();
-
-        for(int row = topRow; row <= bottomRow; ++row)
+        QList<QTableWidgetSelectionRange> selectedRanges = ui->tableWidget->selectedRanges();
+        for(int i = 0; i < selectedRanges.size(); ++i)
         {
-            QString serviceID = ui->tableWidget->item(row, 0)->text();
-            qDebug()<<"Delete Service:"<<serviceID;
+            QTableWidgetSelectionRange  selectedRange =  selectedRanges.at(i);
+            int topRow = selectedRange.topRow();
+            int bottomRow = selectedRange.bottomRow();
 
-            if(SingletonDBHelper->modifyService(serviceID, 0))
+            for(int row = topRow; row <= bottomRow; ++row)
             {
-                sendProcessCmd(serviceID, TYPE_DELETE);
-                serviceManage_->modifyServiceStatus(serviceID, 0);
-                ui->tableWidget->removeRow(row);
+                QString serviceID = ui->tableWidget->item(row, 0)->text();
+                qDebug()<<"Delete Service:"<<serviceID;
+
+                if(SingletonDBHelper->modifyService(serviceID, 0))
+                {
+                    sendProcessCmd(serviceID, TYPE_DELETE);
+                    serviceManage_->modifyServiceStatus(serviceID, 0);
+                    ui->tableWidget->removeRow(row);
+                }
             }
         }
     }

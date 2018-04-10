@@ -184,6 +184,7 @@ void DataBaseHelper::readServiceDataFromDB(QMap<DeviceType, QStringList> &mapSer
         QString serviceID = query.value(0).toString();
         int serviceType = query.value(1).toInt();
         int serviceStatus = query.value(2).toInt();
+
         mapServiceID[DeviceType(serviceType)].push_back(serviceID);
         mapServiceStatus[serviceID] = serviceStatus;
     }

@@ -291,7 +291,7 @@ void ServiceManage::createService()
     QStandardItem* serviceItem = new QStandardItem(mapServiceIcon_[deviceType],
             QString("%1%2").arg(mapServicePrefix_[deviceType]).arg(iCnt,3,10,QChar('0')));
 
-    if(SingletonDBHelper->writeServiceDataToDB(serviceItem->text(),currentIndex.row()))
+    if(SingletonDBHelper->writeServiceDataToDB(serviceItem->text(),deviceType))
     {
         serviceItem->setEditable(false);
         currentItem->appendRow(serviceItem);
@@ -477,6 +477,7 @@ void ServiceManage::dispDeviceData(QString deviceID)
         deviceDataDisp->setDeviceType(deviceData->deviceType_);
         deviceDataDisp->setWindowTitle("设备详细信息");
         deviceDataDisp->setDeviceData(deviceData->DeviceID_,deviceData->DeviceName_,getAreaNameById(deviceData->AreaID_), deviceData->AreaID_,deviceData->DeviceIp_,deviceData->DevicePort_,deviceData->DeviceUser_,deviceData->DevicePasswd,deviceData->ServiceID_);
+        deviceDataDisp->setWindowFlags(Qt::WindowStaysOnTopHint);
         deviceDataDisp->show();
     }
 }

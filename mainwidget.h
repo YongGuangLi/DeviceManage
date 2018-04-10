@@ -11,6 +11,7 @@
 #include <QStandardItemModel>
 #include <QGridLayout>
 #include <QDateTime>
+#include <QMessageBox>
 
 namespace Ui {
 class MainWidget;
