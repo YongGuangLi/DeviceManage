@@ -96,13 +96,13 @@ private:
     QMap<QString,DeviceType> mapServiceType_;     //服务类型名字、服务类型
     QMap<DeviceType,QString> mapServicePrefix_;   //服务类型、新建服务名字前缀
 
-    QMap<QString,stAreaData> mapAreaData;        //区域名、区域信息
+    QMap<QString,stAreaData> mapAreaData;        //区域ID、区域信息
 
     QMap<DeviceType,QStringList> mapServiceID_;    //不同服务类型下所有服务ID
     QMap<QString, int> mapServiceStatus_;          //所有服务状态
 
-    QMap<QString,QStandardItem*> mapServiceItem_;   //保存所有服务的树节点
-    QMap<QString,QStandardItem*> mapAreaItem_;      //保存所有区域的树节点
+    QMap<QString,QStandardItem*> mapServiceItem_;   //保存所有服务ID、树节点
+    QMap<QString,QStandardItem*> mapAreaItem_;      //保存所有区域ID、树节点
 
     QList<stDeviceData*> listDeviceData_;          //所有设备信息,用指针便于修改值
 

@@ -217,7 +217,12 @@ void ServiceManage::recursionAreaData(int level)
             QStandardItem *areaItem = new QStandardItem(areaData.AreadName_);
             areaItem->setEditable(false);
 
-            QStandardItem *parentItem = mapAreaItem_[areaData.ParentAreaID_];
+            QStandardItem *parentItem = mapAreaItem_.value(areaData.ParentAreaID_,NULL);
+            if(parentItem == NULL)
+            {
+                qDebug()<<areaData.ParentAreaID_;
+                continue;
+            }
             mapAreaItem_[areaData.AreaID_] = areaItem;
             parentItem->appendRow(areaItem);
         }
@@ -358,9 +363,18 @@ void ServiceManage::deleteServiceItem()               //删除树上的服务节
 void ServiceManage::areaItemDoubleClicked(QModelIndex index)
 {
     QStandardItem *item = areaModel->itemFromIndex(index);
-    stAreaData areaData = mapAreaData[item->text()];
-    QString areaID = areaData.AreaID_;
 
+    QString areaID;
+    QMapIterator<QString,QStandardItem*> itAreaItem(mapAreaItem_);
+    while(itAreaItem.hasNext())
+    {
+        itAreaItem.next();
+        if(itAreaItem.value() == item)
+        {
+            areaID = itAreaItem.key();
+            break;
+        }
+    }
     clearGroupBoxButton();
     for(int i = 0; i < listDeviceData_.size(); ++i)
     {

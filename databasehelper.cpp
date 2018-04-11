@@ -130,7 +130,7 @@ void DataBaseHelper::readAreaDataFromDB(QMap<QString,stAreaData> &mapAreaData)
             areaData.Level_ =  query.value(2).toInt();
             areaData.ParentAreaID_ = query.value(3).toString();
 
-            mapAreaData[areaData.AreadName_] = areaData;
+            mapAreaData[areaData.AreaID_] = areaData;
         }
     }
 }
