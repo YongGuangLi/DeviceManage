@@ -232,6 +232,7 @@ void MainWidget::stopProcess()
             {
                 QString serviceID = ui->tableWidget->item(row, 0)->text();
                 qDebug()<<"Stop Service:"<<serviceID;
+                serviceManage_->modifyServiceStatus(serviceID, 0);
                 sendProcessCmd(serviceID, TYPE_STOP);
             }
         }

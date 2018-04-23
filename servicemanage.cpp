@@ -50,8 +50,6 @@ ServiceManage::ServiceManage(QWidget *parent) :
     mapServiceType_["定位服务程序"] = TYPE_LOCATION;
     mapServiceType_["人数统计服务程序"] = TYPE_CAMERA_COUNT;
 
-
-
     SingletonDBHelper->readAreaDataFromDB(this->mapAreaData);
     SingletonDBHelper->readDeviceDataFromDB(this->listDeviceData_);
     SingletonDBHelper->readServiceDataFromDB(this->mapServiceID_,this->mapServiceStatus_);
@@ -169,10 +167,11 @@ void ServiceManage::initServiceData()
             }
         }
     }
-    for(int i = 0; i < mapServiceTypeName_.size(); ++i)
+    QMapIterator<QString, int> itServiceStatus(mapServiceStatus_);
+    while(itServiceStatus.hasNext())
     {
-
-
+        itServiceStatus.next();
+        modifyServiceStatus(itServiceStatus.key(), itServiceStatus.value());
     }
     ui->treeView->setModel(serviceModel);
 }
@@ -324,10 +323,18 @@ void ServiceManage::deleteServiceItem()               //删除树上的服务节
 {
     QModelIndex currentIndex = ui->treeView->currentIndex();
     QStandardItem *currentItem = serviceModel->itemFromIndex(currentIndex);
+    QString serviceID = currentItem->text();
+
+    int serviceStatus = mapServiceStatus_.value(serviceID, -1);
+    if(serviceStatus == 1)
+    {
+        QMessageBox::Ok == QMessageBox::warning(NULL, "警告","服务正在运行",QMessageBox::Ok);
+        return;
+    }
 
     if(QMessageBox::Ok == QMessageBox::warning(NULL, "警告","确认删除",QMessageBox::Ok | QMessageBox::No))
     {
-        QString serviceID = currentItem->text();
+
         if(SingletonDBHelper->deleteService(serviceID))
         {
             mapServiceItem_.remove(serviceID);                                 //删除服务节点
@@ -537,8 +544,6 @@ void ServiceManage::sendDeviceConfigMsg(QStandardItem *serviceItem)
 
     if(SingletonRedis->WriteValue(dataBuf, safeManageMsg.ByteSize(), channel, QString("8002_%1").arg(serviceItem->text()).toStdString()))
     {
-        SingletonDBHelper->modifyService(serviceItem->text(), 1);
-        mapServiceStatus_[serviceItem->text()] = 1;
         qDebug()<<QString("Send ServiceDeviceData:%1,Size:%2").arg(serviceItem->text()).arg(safeManageMsg.ByteSize());
     }
 }
@@ -546,6 +551,18 @@ void ServiceManage::sendDeviceConfigMsg(QStandardItem *serviceItem)
 void ServiceManage::modifyServiceStatus(QString serviceID, int status)
 {
     mapServiceStatus_[serviceID] = status;
+
+    QStandardItem* serviceItem = mapServiceItem_.value(serviceID, NULL);
+    if(serviceItem == NULL)
+        return;
+
+    int rowCount = serviceItem->rowCount();
+    bool enabled = status == 1 ? false : true;   //如果服务状态为1,配置为运行状态，不让改变设备节点的复选框
+    for(int i = 0; i < rowCount; ++i)
+    {
+        QStandardItem* deviceItem = serviceItem->child(i);
+        deviceItem->setEnabled(enabled);
+    }
 }
 
 QString ServiceManage::getAreaNameById(QString areaId)
@@ -697,5 +714,8 @@ void ServiceManage::receiveDeviceInitRequest(DeviceInitRequestMsg deviceInitRequ
         qWarning()<<serviceID<<" not exist";
         return;
     }
+
+    SingletonDBHelper->modifyService(serviceID, 1);
+    modifyServiceStatus(serviceID, 1);              //收到服务程序设备请求，修改服务状态
     sendDeviceConfigMsg(serviceItem);
 }
