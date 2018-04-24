@@ -78,6 +78,9 @@ bool MainWidget::eventFilter(QObject *obj, QEvent *event)
 void MainWidget::receiveProcessInfo(ProcessInfoMsg processInfoMsg)
 {
     QString serviceID = processInfoMsg.serviceid().c_str();
+    SingletonDBHelper->modifyService(serviceID, 1);
+    serviceManage_->modifyServiceStatus(serviceID, 1);              //收到服务程序设备请求，修改服务状态
+
     QList<QTableWidgetItem*> listItem = ui->tableWidget->findItems(serviceID,Qt::MatchExactly);
     //查看该进程是否存在
     if(listItem.size() == 0)
@@ -232,8 +235,11 @@ void MainWidget::stopProcess()
             {
                 QString serviceID = ui->tableWidget->item(row, 0)->text();
                 qDebug()<<"Stop Service:"<<serviceID;
-                serviceManage_->modifyServiceStatus(serviceID, 0);
-                sendProcessCmd(serviceID, TYPE_STOP);
+                if(SingletonDBHelper->modifyService(serviceID, 0))
+                {
+                    serviceManage_->modifyServiceStatus(serviceID, 0);
+                    sendProcessCmd(serviceID, TYPE_STOP);
+                }
             }
         }
     }
@@ -257,8 +263,8 @@ void MainWidget::deleteProcess()
 
                 if(SingletonDBHelper->modifyService(serviceID, 0))
                 {
-                    sendProcessCmd(serviceID, TYPE_DELETE);
                     serviceManage_->modifyServiceStatus(serviceID, 0);
+                    sendProcessCmd(serviceID, TYPE_DELETE);
                     ui->tableWidget->removeRow(row);
                 }
             }

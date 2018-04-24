@@ -167,12 +167,6 @@ void ServiceManage::initServiceData()
             }
         }
     }
-    QMapIterator<QString, int> itServiceStatus(mapServiceStatus_);
-    while(itServiceStatus.hasNext())
-    {
-        itServiceStatus.next();
-        modifyServiceStatus(itServiceStatus.key(), itServiceStatus.value());
-    }
     ui->treeView->setModel(serviceModel);
 }
 
@@ -575,7 +569,7 @@ QString ServiceManage::getAreaNameById(QString areaId)
         stAreaData areaData = itAreaData.value();
         if(areaData.AreaID_ == areaId)
         {
-            areaName = itAreaData.key();
+            areaName = areaData.AreadName_;
         }
     }
     return areaName;
