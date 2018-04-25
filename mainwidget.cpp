@@ -17,7 +17,10 @@ MainWidget::MainWidget(QWidget *parent) :
     }
 
     //连接redis
-    SingletonRedis->open(SingletonConfig->getIpRedis(), SingletonConfig->getPortRedis());
+    if(SingletonRedis->open(SingletonConfig->getIpRedis(), SingletonConfig->getPortRedis()))
+    {
+        SingletonRedis->start();
+    }
 
     ui->label_ProgressManage->installEventFilter(this);
     ui->label_ServiceManage->installEventFilter(this);
