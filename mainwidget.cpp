@@ -43,6 +43,7 @@ MainWidget::MainWidget(QWidget *parent) :
     connect(SingletonRedis, SIGNAL(sendDevicesStatus(DevicesStatusMsg)), this, SLOT(receiveDevicesStatus(DevicesStatusMsg)));
     connect(SingletonRedis, SIGNAL(sendProcessAlarm(ProcessAlarmMsg)), this, SLOT(receiveProcessAlarm(ProcessAlarmMsg)));
     connect(SingletonRedis, SIGNAL(sendCtrlResponse(CtrlResponseMsg)), this, SLOT(receiveCtrlResponse(CtrlResponseMsg)));
+    connect(SingletonRedis, SIGNAL(sendRedisStatus(QString)), this, SLOT(receiveRedisStatus(QString)));
 
     mapServiceStatus_[TYPE_MANUALSTOP] = "手动停止";
     mapServiceStatus_[TYPE_ERRORSTOP] = "异常停止";
@@ -185,6 +186,11 @@ void MainWidget::receiveCtrlResponse(CtrlResponseMsg ctrlResponseMsg)
                                 arg(ctrlResponseMsg.serviceid().c_str()).arg(ctrlResponseMsg.deviceid().c_str()).
                                 arg(ctrlResponseMsg.detail().c_str());
     ui->textBrowser->append(QString("<span style=\" color:#%1;\">%2</span>").arg("FF0000").arg(logInfo));
+}
+
+void MainWidget::receiveRedisStatus(QString logInfo)
+{
+      ui->textBrowser->append(QString("<span style=\" color:#%1;\">%2</span>").arg("FF0000").arg(logInfo));
 }
 
 //进程控制菜单

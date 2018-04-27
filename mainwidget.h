@@ -34,6 +34,8 @@ private slots:
     void receiveProcessAlarm(ProcessAlarmMsg);
     void receiveCtrlResponse(CtrlResponseMsg);
 
+    void receiveRedisStatus(QString);
+
     void showCtrlMenu(QPoint pos);
     void restartProcess();
     void stopProcess();
