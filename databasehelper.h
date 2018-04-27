@@ -1,6 +1,9 @@
 #ifndef DATABASEHELPER_H
 #define DATABASEHELPER_H
 
+
+#include "datatype.h"
+#include "SafeManageMsg.pb.h"
 #include <QObject>
 #include <QSqlDatabase>
 #include <QSqlError>
@@ -9,8 +12,7 @@
 #include <QMap>
 #include <QList>
 #include <QSqlQuery>
-#include "datatype.h"
-#include "SafeManageMsg.pb.h"
+#include <QTimer>
 
 #define SingletonDBHelper DataBaseHelper::GetInstance()
 
@@ -34,6 +36,9 @@ public:
     bool modifyService(QString serviceID, int serviceStatus);
 
     QString getError();
+private slots:
+    void checkConnect();
+
 private:
     explicit DataBaseHelper(QObject *parent = 0);
     static DataBaseHelper * dbHelp_;

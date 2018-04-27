@@ -42,6 +42,7 @@ MainWidget::MainWidget(QWidget *parent) :
     connect(SingletonRedis, SIGNAL(sendProcessInfo(ProcessInfoMsg)), this, SLOT(receiveProcessInfo(ProcessInfoMsg)));
     connect(SingletonRedis, SIGNAL(sendDevicesStatus(DevicesStatusMsg)), this, SLOT(receiveDevicesStatus(DevicesStatusMsg)));
     connect(SingletonRedis, SIGNAL(sendProcessAlarm(ProcessAlarmMsg)), this, SLOT(receiveProcessAlarm(ProcessAlarmMsg)));
+    connect(SingletonRedis, SIGNAL(sendCtrlResponse(CtrlResponseMsg)), this, SLOT(receiveCtrlResponse(CtrlResponseMsg)));
 
     mapServiceStatus_[TYPE_MANUALSTOP] = "手动停止";
     mapServiceStatus_[TYPE_ERRORSTOP] = "异常停止";
@@ -172,9 +173,18 @@ void MainWidget::receiveDevicesStatus(DevicesStatusMsg devicesStatusMsg)
 //显示进程告警
 void MainWidget::receiveProcessAlarm(ProcessAlarmMsg processAlarmMsg)
 {
-    ui->textBrowser->append(QString("时间:%1   服务ID:%2   进程名称:%3   告警内容:%4").
-                            arg(processAlarmMsg.time().c_str()).arg(processAlarmMsg.serviceid().c_str()).
-                            arg(processAlarmMsg.processname().c_str()).arg(processAlarmMsg.alarmdetail().c_str()));
+    QString logInfo = QString("时间:%1 服务ID:%2 进程名称:%3 告警内容:%4").
+                                arg(processAlarmMsg.time().c_str()).arg(processAlarmMsg.serviceid().c_str()).
+                                arg(processAlarmMsg.processname().c_str()).arg(processAlarmMsg.alarmdetail().c_str());
+     ui->textBrowser->append(QString("<span style=\" color:#%1;\">%2</span>").arg("FF0000").arg(logInfo));
+}
+
+void MainWidget::receiveCtrlResponse(CtrlResponseMsg ctrlResponseMsg)
+{
+    QString logInfo = QString("服务ID:%1 设备ID:%2 告警内容:%3").
+                                arg(ctrlResponseMsg.serviceid().c_str()).arg(ctrlResponseMsg.deviceid().c_str()).
+                                arg(ctrlResponseMsg.detail().c_str());
+    ui->textBrowser->append(QString("<span style=\" color:#%1;\">%2</span>").arg("FF0000").arg(logInfo));
 }
 
 //进程控制菜单

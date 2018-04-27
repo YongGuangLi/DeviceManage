@@ -27,10 +27,12 @@ public:
     void sendProcessCmd(QString, ProcessCmdType);
 protected:
     bool eventFilter(QObject *, QEvent *);
+
 private slots:
     void receiveProcessInfo(ProcessInfoMsg);
     void receiveDevicesStatus(DevicesStatusMsg);
     void receiveProcessAlarm(ProcessAlarmMsg);
+    void receiveCtrlResponse(CtrlResponseMsg);
 
     void showCtrlMenu(QPoint pos);
     void restartProcess();
