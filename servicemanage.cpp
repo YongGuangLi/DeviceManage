@@ -575,6 +575,21 @@ QString ServiceManage::getAreaNameById(QString areaId)
     return areaName;
 }
 
+DeviceType ServiceManage::getServiceTypeByServiceID(QString serviceID)
+{
+    QMapIterator<DeviceType,QStringList> itServiceID(mapServiceID_);
+    while(itServiceID.hasNext())
+    {
+        itServiceID.next();
+        QStringList listServiceID = itServiceID.value();
+        bool isExist = listServiceID.contains(serviceID);
+        if(isExist)
+        {
+            return itServiceID.key();
+        }
+    }
+}
+
 
 bool ServiceManage::eventFilter(QObject *obj, QEvent *event)
 {
@@ -702,14 +717,37 @@ void ServiceManage::receiveDeviceInitRequest(DeviceInitRequestMsg deviceInitRequ
 {
     QString serviceID = deviceInitRequest.serviceid().c_str();
     qDebug()<<"receiveDeviceInitRequest:"<<serviceID<<" Type:"<<deviceInitRequest.type();
-    QStandardItem* serviceItem = mapServiceItem_.value(serviceID, NULL);
-    if(serviceItem == NULL)
+    if(serviceID == QString(DATACENTER))
     {
-        qWarning()<<serviceID<<" not exist";
-        return;
+        QMapIterator<QString, int> itServiceStatus(mapServiceStatus_);
+        while(itServiceStatus.hasNext())
+        {
+            itServiceStatus.next();
+            if(itServiceStatus.value() == 1)
+            {
+                if(getServiceTypeByServiceID(itServiceStatus.key()) == deviceInitRequest.type())
+                {
+                    QStandardItem* serviceItem = mapServiceItem_.value(itServiceStatus.key(), NULL);
+                    if(serviceItem == NULL)
+                    {
+                        qDebug()<<itServiceStatus.key()<<" not exist QStandardItem";
+                        return;
+                    }
+                    sendDeviceConfigMsg(serviceItem);
+                }
+            }
+        }
     }
-
-    SingletonDBHelper->modifyService(serviceID, 1);
-    modifyServiceStatus(serviceID, 1);              //收到服务程序设备请求，修改服务状态
-    sendDeviceConfigMsg(serviceItem);
+    else
+    {
+        QStandardItem* serviceItem = mapServiceItem_.value(serviceID, NULL);
+        if(serviceItem == NULL)
+        {
+            qDebug()<<serviceID<<" not exist QStandardItem";
+            return;
+        }
+        SingletonDBHelper->modifyService(serviceID, 1);
+        modifyServiceStatus(serviceID, 1);              //收到服务程序设备请求，修改服务状态
+        sendDeviceConfigMsg(serviceItem);
+    }
 }
