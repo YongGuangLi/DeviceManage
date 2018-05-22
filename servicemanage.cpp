@@ -524,10 +524,6 @@ void ServiceManage::sendDeviceConfigMsg(QStandardItem *serviceItem)
                 deviceInfoMsg->set_port(deviceData->DevicePort_.toInt());
                 deviceInfoMsg->set_user(deviceData->DeviceUser_.toStdString());
                 deviceInfoMsg->set_key(deviceData->DevicePasswd.toStdString());
-                if(deviceType == TYPE_CAMERA)         //如果设备是摄像头，还要设置抓拍照片存储路径
-                {
-                    deviceInfoMsg->set_path(SingletonConfig->getPath().toLocal8Bit().data());
-                }
             }
         }
     }

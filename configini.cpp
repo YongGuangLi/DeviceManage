@@ -29,10 +29,7 @@ ConfigIni::ConfigIni(QObject *parent) : QObject(parent)
         settings_->beginGroup("REDIS");
         ipRedis_ = settings_->value("ip").toString();
         portRedis_ = settings_->value("port").toInt();
-        settings_->endGroup();
-
-        settings_->beginGroup("PATH");
-        path_ = settings_->value("path").toString();
+        passwdRedis_ = settings_->value("passwd").toString();
         settings_->endGroup();
     }
     else
@@ -77,7 +74,8 @@ int ConfigIni::getPortRedis() const
     return portRedis_;
 }
 
-QString ConfigIni::getPath() const
+QString ConfigIni::getPasswdRedis() const
 {
-    return path_;
+    return passwdRedis_;
 }
+

@@ -23,8 +23,8 @@ public:
 
     QString getIpRedis() const;
     int getPortRedis() const;
+    QString getPasswdRedis() const;
 
-    QString getPath() const;
 private:
     explicit ConfigIni(QObject *parent = 0);
     static ConfigIni* configIni;
@@ -37,9 +37,7 @@ private:
 
     QString ipRedis_;
     int portRedis_;
-
-    QString path_;
-
+    QString passwdRedis_;
 signals:
     
 public slots:

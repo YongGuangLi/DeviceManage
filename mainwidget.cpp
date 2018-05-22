@@ -17,7 +17,7 @@ MainWidget::MainWidget(QWidget *parent) :
     }
 
     //连接redis
-    if(SingletonRedis->open(SingletonConfig->getIpRedis(), SingletonConfig->getPortRedis()))
+    if(SingletonRedis->open(SingletonConfig->getIpRedis(), SingletonConfig->getPortRedis(), SingletonConfig->getPasswdRedis()))
     {
         SingletonRedis->start();
     }
