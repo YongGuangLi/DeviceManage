@@ -54,7 +54,7 @@ public:
 
     void clearGroupBoxButton();
 
-    void addDeviceItem(QString serviceId ,QObjectList listObject);   //服务节点添加设备节点
+    void addDeviceItem(QString serviceId);   //服务节点添加设备节点
 
     QStandardItem* findDeviceItemByID(QString);        //通过设备ID,找到树节点
 
@@ -78,7 +78,6 @@ private slots:
     void areaItemDoubleClicked(QModelIndex);           //单击区域按键
 
     void createService();                       //新增服务节点
-    void modifyServiceName();                   //修改服务节点名字
     void serviceConfigFinish();                 //配置完成，发送设备信息
     void deleteServiceItem();                   //删除树中的服务节点
     void deviceCheckChange(QStandardItem*);     //修改设备节点的复选框

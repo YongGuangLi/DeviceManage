@@ -244,8 +244,6 @@ void ServiceManage::slotCustomContextMenu(const QPoint &pos)
     else if(currentItem->parent() != NULL && mapServiceTypeName_.values().contains(currentItem->parent()->text()))
     {
         QMenu *menu = new QMenu(ui->treeView);
-//        QAction *actionModify = new QAction("修改名称",ui->treeView);
-//        connect(actionModify,SIGNAL(triggered()),this,SLOT(modifyServiceName()));
 
         QAction *actionFinish = new QAction("配置完毕",ui->treeView);
         connect(actionFinish,SIGNAL(triggered()),this,SLOT(serviceConfigFinish()));
@@ -253,7 +251,6 @@ void ServiceManage::slotCustomContextMenu(const QPoint &pos)
         QAction *actionDelete = new QAction("删除",ui->treeView);
         connect(actionDelete,SIGNAL(triggered()),this,SLOT(deleteServiceItem()));
 
-//        menu->addAction(actionModify);
         menu->addAction(actionFinish);
         menu->addAction(actionDelete);
         menu->move(cursor().pos());
@@ -297,13 +294,6 @@ void ServiceManage::createService()
         mapServiceItem_[serviceItem->text()] = serviceItem;
         mapServiceID_[deviceType].push_back(serviceItem->text());
     }
-}
-
-void ServiceManage::modifyServiceName()
-{
-    QModelIndex currentIndex = ui->treeView->currentIndex();
-    QStandardItem *currentItem = serviceModel->itemFromIndex(currentIndex);
-    currentItem->setEditable(true);
 }
 
 void ServiceManage::serviceConfigFinish()
@@ -468,7 +458,7 @@ void ServiceManage::selectServiceID(QTableWidgetItem *item)
     QTableWidget *table = dynamic_cast<QTableWidget*>(sender());
     if(table != NULL)
     {
-        addDeviceItem(item->text(), currentSelectDeviceGroup->children());
+        addDeviceItem(item->text());
         table->deleteLater();
     }
 }
@@ -491,7 +481,7 @@ void ServiceManage::dispDeviceData(QString deviceID)
         deviceDataDisp->setWindowIcon(mapServiceIcon_[deviceData->deviceType_]);
         deviceDataDisp->setDeviceType(deviceData->deviceType_);
         deviceDataDisp->setWindowTitle("设备详细信息");
-        deviceDataDisp->setDeviceData(deviceData->DeviceID_,deviceData->DeviceName_,getAreaNameById(deviceData->AreaID_), deviceData->AreaID_,deviceData->DeviceIp_,deviceData->DevicePort_,deviceData->DeviceUser_,deviceData->DevicePasswd,deviceData->ServiceID_);
+        deviceDataDisp->setDeviceData(deviceData->DeviceID_,deviceData->DeviceName_,getAreaNameById(deviceData->AreaID_), deviceData->AreaID_,deviceData->DeviceIp_,deviceData->DevicePort_,deviceData->DeviceUser_,deviceData->DevicePasswd,deviceData->ServiceID_, deviceData->Factory_);
         deviceDataDisp->setWindowFlags(Qt::WindowStaysOnTopHint);
         deviceDataDisp->show();
     }
@@ -524,9 +514,13 @@ void ServiceManage::sendDeviceConfigMsg(QStandardItem *serviceItem)
                 deviceInfoMsg->set_port(deviceData->DevicePort_.toInt());
                 deviceInfoMsg->set_user(deviceData->DeviceUser_.toStdString());
                 deviceInfoMsg->set_key(deviceData->DevicePasswd.toStdString());
+
+                deviceConfigMsg->set_factory(deviceData->Factory_.toStdString());
             }
         }
     }
+
+
     char dataBuf[2048] = {0};
     safeManageMsg.SerializeToArray(dataBuf, 2048);
     vector<string> channel;
@@ -604,13 +598,15 @@ bool ServiceManage::eventFilter(QObject *obj, QEvent *event)
             tableServiceID->horizontalHeader()->setStretchLastSection(true);
             tableServiceID->horizontalHeader()->hide();
 
-            for(int i = 0; i < mapServiceID_[deviceType_].size(); ++i)
+            QStringList listService = mapServiceID_.value(deviceType_);  //获取该设备类型的所有服务
+            for(int i = 0; i < listService.size(); ++i)
             {
                 int rowCount = tableServiceID->rowCount();
                 tableServiceID->insertRow(rowCount);
 
-                QTableWidgetItem *item0 = new QTableWidgetItem(mapServiceID_[deviceType_].at(i));
+                QTableWidgetItem *item0 = new QTableWidgetItem(listService.at(i));
                 item0->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+
                 tableServiceID->setItem(rowCount,0,item0);
             }
             tableServiceID->show();
@@ -642,23 +638,29 @@ void ServiceManage::clearGroupBoxButton()
     }
 }
 
-void ServiceManage::addDeviceItem(QString serviceId, QObjectList listObject)
+void ServiceManage::addDeviceItem(QString serviceId)
 {
     QStandardItem *serviceItem = mapServiceItem_[serviceId];
-
+    QObjectList listObject = currentSelectDeviceGroup->children();
     for(int i = 0; i < listObject.size(); ++i)
     {
         if(QPushButton *button = dynamic_cast<QPushButton*>(listObject.at(i)))
         {
             QString deviceID = button->objectName();
             QString deviceName = button->text();
-            QStandardItem *deviceItem = findDeviceItemByID(deviceID); //查看所有树节点是否已有该设备ID
-            if(deviceItem != NULL)
+            stDeviceData* deviceData = findDeviceDataByID(deviceID);
+
+            if(findDeviceItemByID(deviceID) != NULL) //查看所有树节点是否已有该设备ID
+                continue;
+
+            static QString Factory = deviceData->Factory_;
+
+            if(Factory != deviceData->Factory_)      //只添加第一个设备厂家的设备
                 continue;
 
             if(SingletonDBHelper->modifyDeviceServiceID(deviceID, 1, serviceId))
             {
-                deviceItem = new QStandardItem(deviceName);
+                QStandardItem *deviceItem = new QStandardItem(deviceName);
                 deviceItem->setCheckable(true);
                 deviceItem->setCheckState(Qt::Checked);
                 deviceItem->setEditable(false);

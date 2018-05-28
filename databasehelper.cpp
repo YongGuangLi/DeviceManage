@@ -3,7 +3,7 @@
 
 #define SQL_AREADATA "select area_id,area_name,level,parent_id from ws_area"
 #define SQL_DEVICEDATA "select device_id,device_name,area_id,device_type,ip,port,device_username, \
-password,service_id,checkable from ws_device"
+password,service_id,checkable,device_factory from ws_device"
 
 #define SQL_MODIFYSERVICEID "UPDATE ws_device set SERVICE_ID = '%1', CHECKABLE = %2 WHERE DEVICE_ID = '%3'"
 
@@ -81,28 +81,18 @@ void DataBaseHelper::readDeviceDataFromDB(QList<stDeviceData*>& listDeviceData)
     }
     while(query.next())
     {
-        QString device_id =  query.value(0).toString();
-        QString device_name =  query.value(1).toString();
-        QString area_id = query.value(2).toString();
-        QString device_type =  query.value(3).toString();
-        QString ip =  query.value(4).toString();
-        QString port =  query.value(5).toString();
-        QString device_username =  query.value(6).toString();
-        QString password =  query.value(7).toString();
-        QString service_id =  query.value(8).toString();
-        int checkable =  query.value(9).toInt();
-
         stDeviceData *deviceData = new stDeviceData();
-        deviceData->DeviceID_ = device_id;
-        deviceData->DeviceName_ = device_name;
-        deviceData->AreaID_ = area_id;
-        deviceData->DeviceIp_ = ip;
-        deviceData->DevicePort_ = port;
-        deviceData->DeviceUser_ = device_username;
-        deviceData->DevicePasswd = password;
-        deviceData->ServiceID_ = service_id;
-        deviceData->Checkable_ = checkable;
-        deviceData->deviceType_ = mapDeviceType.value(device_type);
+        deviceData->DeviceID_ = query.value(0).toString();
+        deviceData->DeviceName_ = query.value(1).toString();
+        deviceData->AreaID_ = query.value(2).toString();
+        deviceData->deviceType_ = mapDeviceType.value(query.value(3).toString());
+        deviceData->DeviceIp_ = query.value(4).toString();
+        deviceData->DevicePort_ = query.value(5).toString();
+        deviceData->DeviceUser_ = query.value(6).toString();
+        deviceData->DevicePasswd = query.value(7).toString();
+        deviceData->ServiceID_ = query.value(8).toString();
+        deviceData->Checkable_ = query.value(9).toInt();
+        deviceData->Factory_ = query.value(10).toString();
 
         listDeviceData.push_back(deviceData);
         //qDebug()<<device_id<<device_name<<area_id<<device_type<<ip<<port<<device_username<<password<<service_id<<checkable;
