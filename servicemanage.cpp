@@ -279,8 +279,8 @@ void ServiceManage::createService()
     int iCnt = 0;
     if(listServiceID.size())
     {
-        QString serviceID = listServiceID.at(listServiceID.size() - 1);
-        iCnt = serviceID.right(3).toInt() + 1;
+        QString serviceID = listServiceID.at(listServiceID.size() - 1);   //获取最后服务ID
+        iCnt = serviceID.right(3).toInt() + 1;                            //
     }
 
     QStandardItem* serviceItem = new QStandardItem(mapServiceIcon_[deviceType],
@@ -506,7 +506,7 @@ void ServiceManage::sendDeviceConfigMsg(QStandardItem *serviceItem)
         {
             if(deviceItem->checkState() == Qt::Checked)
             {
-                qDebug()<<"Send DeviceData:"<<deviceData->DeviceID_.toStdString().c_str();
+                qDebug()<<"Send DeviceData:"<<deviceData->DeviceID_<<deviceData->Factory_;
                 DeviceInfoMsg* deviceInfoMsg = deviceConfigMsg->add_deviceinfo();
                 deviceInfoMsg->set_areaid(deviceData->AreaID_.toStdString());
                 deviceInfoMsg->set_deviceid(deviceData->DeviceID_.toStdString());
@@ -589,8 +589,6 @@ bool ServiceManage::eventFilter(QObject *obj, QEvent *event)
         QObjectList listObject = groupBox->children();
         if(listObject.size() >= 0)
         {
-            DeviceType deviceType_ = mapGroupBoxTitle_[groupBox->title()];
-
             QTableWidget *tableServiceID = new QTableWidget();
             tableServiceID->setColumnCount(1);
             tableServiceID->setWindowTitle(QString::fromLocal8Bit("选择服务"));
@@ -598,6 +596,7 @@ bool ServiceManage::eventFilter(QObject *obj, QEvent *event)
             tableServiceID->horizontalHeader()->setStretchLastSection(true);
             tableServiceID->horizontalHeader()->hide();
 
+            DeviceType deviceType_ = mapGroupBoxTitle_[groupBox->title()];
             QStringList listService = mapServiceID_.value(deviceType_);  //获取该设备类型的所有服务
             for(int i = 0; i < listService.size(); ++i)
             {
@@ -653,8 +652,12 @@ void ServiceManage::addDeviceItem(QString serviceId)
             if(findDeviceItemByID(deviceID) != NULL) //查看所有树节点是否已有该设备ID
                 continue;
 
-            static QString Factory = deviceData->Factory_;
-
+            QString Factory = deviceData->Factory_;
+            if(serviceItem->hasChildren())        //获取已添加设备的厂家
+            {
+                QStandardItem *deviceItem = serviceItem->child(0,0);
+                Factory = mapDeviceItem_[deviceItem]->Factory_;
+            }
             if(Factory != deviceData->Factory_)      //只添加第一个设备厂家的设备
                 continue;
 
@@ -666,12 +669,12 @@ void ServiceManage::addDeviceItem(QString serviceId)
                 deviceItem->setEditable(false);
                 serviceItem->appendRow(deviceItem);
 
-                mapDeviceButton[deviceID]->setStyleSheet(CkeckedStyleSheet);
-
                 stDeviceData *deviceData = findDeviceDataByID(deviceID);
                 deviceData->ServiceID_ = serviceId;       //修改设备服务ID
                 deviceData->Checkable_ = 1;               //设备选中
                 mapDeviceItem_[deviceItem] = deviceData;      //保存所有设备树节点信息
+
+                mapDeviceButton[deviceID]->setStyleSheet(CkeckedStyleSheet);
             }
         }
     }
