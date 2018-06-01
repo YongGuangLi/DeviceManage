@@ -653,12 +653,12 @@ void ServiceManage::addDeviceItem(QString serviceId)
                 continue;
 
             QString Factory = deviceData->Factory_;
-            if(serviceItem->hasChildren())        //获取已添加设备的厂家
+            if(serviceItem->hasChildren())           //获取已添加设备的厂家
             {
                 QStandardItem *deviceItem = serviceItem->child(0,0);
                 Factory = mapDeviceItem_[deviceItem]->Factory_;
             }
-            if(Factory != deviceData->Factory_)      //只添加第一个设备厂家的设备
+            if(Factory != deviceData->Factory_)      //只添加同一厂家的设备
                 continue;
 
             if(SingletonDBHelper->modifyDeviceServiceID(deviceID, 1, serviceId))
