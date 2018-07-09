@@ -25,6 +25,7 @@ public:
     explicit MainWidget(QWidget *parent = 0);
     ~MainWidget();
     void sendProcessCmd(QString, ProcessCmdType);
+    void dispLogInfo(QString);
 protected:
     bool eventFilter(QObject *, QEvent *);
 

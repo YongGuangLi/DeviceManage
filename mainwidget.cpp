@@ -161,13 +161,12 @@ void MainWidget::receiveDevicesStatus(DevicesStatusMsg devicesStatusMsg)
                                       arg(serviceID).arg(areaID).arg(deviceID).arg(mapDeviceStatus_[status]);
        if(TYPE_OFFLINE == status)
        {
-           ui->textBrowser->append(QString("<span style=\" color:#%1;\">%2</span>").arg("FF0000").arg(logInfo));
+           dispLogInfo(QString("<span style=\" color:#%1;\">%2</span>").arg("FF0000").arg(logInfo));
        }
        else
        {
-           ui->textBrowser->append(QString("<span style=\" color:#%1;\">%2</span>").arg("000000").arg(logInfo));
+           dispLogInfo(QString("<span style=\" color:#%1;\">%2</span>").arg("000000").arg(logInfo));
        }
-
    }
 }
 
@@ -177,7 +176,7 @@ void MainWidget::receiveProcessAlarm(ProcessAlarmMsg processAlarmMsg)
     QString logInfo = QString("时间:%1 服务ID:%2 进程名称:%3 告警内容:%4").
                                 arg(processAlarmMsg.time().c_str()).arg(processAlarmMsg.serviceid().c_str()).
                                 arg(processAlarmMsg.processname().c_str()).arg(processAlarmMsg.alarmdetail().c_str());
-     ui->textBrowser->append(QString("<span style=\" color:#%1;\">%2</span>").arg("FF0000").arg(logInfo));
+     dispLogInfo(QString("<span style=\" color:#%1;\">%2</span>").arg("FF0000").arg(logInfo));
 }
 
 void MainWidget::receiveCtrlResponse(CtrlResponseMsg ctrlResponseMsg)
@@ -185,12 +184,12 @@ void MainWidget::receiveCtrlResponse(CtrlResponseMsg ctrlResponseMsg)
     QString logInfo = QString("服务ID:%1 设备ID:%2 告警内容:%3").
                                 arg(ctrlResponseMsg.serviceid().c_str()).arg(ctrlResponseMsg.deviceid().c_str()).
                                 arg(ctrlResponseMsg.detail().c_str());
-    ui->textBrowser->append(QString("<span style=\" color:#%1;\">%2</span>").arg("FF0000").arg(logInfo));
+    dispLogInfo(QString("<span style=\" color:#%1;\">%2</span>").arg("FF0000").arg(logInfo));
 }
 
 void MainWidget::receiveRedisStatus(QString logInfo)
 {
-      ui->textBrowser->append(QString("<span style=\" color:#%1;\">%2</span>").arg("FF0000").arg(logInfo));
+      dispLogInfo(QString("<span style=\" color:#%1;\">%2</span>").arg("FF0000").arg(logInfo));
 }
 
 //进程控制菜单
@@ -305,4 +304,9 @@ void MainWidget::sendProcessCmd(QString serviceID, ProcessCmdType cmd)
     vector<string> channel;
     channel.push_back(PROCESSMANAGE);
     SingletonRedis->WriteValue(dataBuf, safeManageMainMsg.ByteSize(), channel, QString("8009_%1").arg(serviceID).toStdString());
+}
+
+void MainWidget::dispLogInfo(QString logInfo)
+{
+    ui->textBrowser->append(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss") + " " + logInfo);
 }
